@@ -3,25 +3,58 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Capitoline Council — CapiCo v1.2</title>
+<title>Capitoline Council — CapiCo v1.3</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-  :root{
+  /* ===== テーマ1: アイボリー(既定・老眼配慮) ===== */
+  :root, :root[data-theme="ivory"]{
     --bg:#F6F2E9; --panel:#FFFFFF; --panel-2:#FBF8F1; --edge:#D8CFBB;
     --blue:#1D5FA8; --blue-soft:#E3EDF8; --gold:#A8842C; --gold-soft:#F3E8CB;
     --ok:#1E9E63; --ng:#C4364F; --split:#B07A1E;
     --ink:#2A2E38; --ink-dim:#66707F;
+    --hdr-grad:linear-gradient(180deg,#FFFDF8,#F6F2E9);
+    --body-grad:linear-gradient(180deg, rgba(168,132,44,.05), transparent 240px);
     --mono:"Consolas","Courier New",monospace;
     --sans:"Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",sans-serif;
+  }
+  /* ===== テーマ2: 神殿(粗い大理石・石材) ===== */
+  :root[data-theme="temple"]{
+    --bg:#E8E2D4; --panel:#F3EEE2; --panel-2:#EAE3D2; --edge:#B7A98C;
+    --blue:#5A6B52; --blue-soft:#DCE1D0; --gold:#8C6D2F; --gold-soft:#E4D8B8;
+    --ok:#4A7A45; --ng:#A6412F; --split:#8A6A22;
+    --ink:#33302A; --ink-dim:#6E665A;
+    --hdr-grad:linear-gradient(180deg,#F0EADB,#DED6C4);
+    --body-grad:none;
+    --mono:"Consolas","Courier New",monospace;
+    --sans:"Hiragino Mincho ProN","Yu Mincho","MS Mincho",serif;
+  }
+  /* ===== テーマ3: ゼーレ(深宇宙・審問) ===== */
+  :root[data-theme="seele"]{
+    --bg:#000000; --panel:#0A0A0C; --panel-2:#111114; --edge:#3A0E10;
+    --blue:#C81E2A; --blue-soft:#1C0507; --gold:#D62828; --gold-soft:#2A0608;
+    --ok:#E23B4A; --ng:#FF3B3B; --split:#E07A1E;
+    --ink:#E8D8C0; --ink-dim:#8A7A6A;
+    --hdr-grad:linear-gradient(180deg,#0A0000,#000000);
+    --body-grad:radial-gradient(ellipse 70% 40% at 50% 0%, rgba(200,30,42,.06), transparent);
+    --mono:"Consolas","Courier New",monospace;
+    --sans:"Times New Roman","Hiragino Mincho ProN","Yu Mincho",serif;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{font-size:16px}
   body{background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:100vh;line-height:1.7;
-    background-image:linear-gradient(180deg, rgba(168,132,44,.05), transparent 240px)}
+    background-image:var(--body-grad)}
+  :root[data-theme="temple"] body{
+    background-image:
+      repeating-linear-gradient(115deg, rgba(90,70,40,.03) 0 2px, transparent 2px 5px),
+      repeating-linear-gradient(28deg, rgba(120,100,70,.025) 0 3px, transparent 3px 7px);
+  }
+  :root[data-theme="temple"] .card, :root[data-theme="temple"] .pillar{
+    background-image:repeating-linear-gradient(100deg, rgba(120,100,70,.035) 0 3px, transparent 3px 8px);
+  }
   header{padding:14px 20px 10px;border-bottom:3px solid var(--gold);
-    background:linear-gradient(180deg,#FFFDF8,#F6F2E9);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+    background:var(--hdr-grad);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   .brand .en{font-family:var(--mono);font-size:21px;letter-spacing:5px;color:var(--gold);font-weight:bold}
   .brand .jp{font-size:12px;color:var(--ink-dim);letter-spacing:2px;margin-top:2px}
   .brand{display:flex;flex-direction:column}
@@ -188,6 +221,69 @@
   .doc-chip .ddel{background:none;border:1px solid var(--ng);color:var(--ng);border-radius:3px;
     cursor:pointer;font-size:12px;padding:2px 8px}
   .doc-total{font-family:var(--mono);font-size:12px;color:var(--ink-dim);margin-top:6px}
+
+  /* ===== 三神の玉座(シグネチャ・アニメーション) ===== */
+  .sanctum{
+    position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+    background:var(--panel-2);border:1px solid var(--edge);border-radius:6px;
+    padding:16px 10px 10px;margin-bottom:16px;overflow:hidden;min-height:150px;
+  }
+  :root[data-theme="seele"] .sanctum{background:#000;border-color:var(--edge)}
+  .throne{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+    padding-bottom:6px;min-height:130px}
+  .throne .glyph{font-size:11px;font-family:var(--mono);letter-spacing:2px;color:var(--gold);margin-bottom:4px;text-align:center}
+  .throne .seat-name{font-size:12px;color:var(--ink-dim);margin-top:4px}
+  /* 石柱 */
+  .throne .pillar-col{position:relative;width:46px;height:78px;border-radius:5px 5px 0 0;
+    background:linear-gradient(90deg,#0002,transparent 20%,transparent 80%,#0002),var(--edge);
+    box-shadow:inset 0 0 0 1px #0001}
+  :root[data-theme="seele"] .throne .pillar-col{display:none}
+  /* ゼーレ: 赤い三角モノリス */
+  .throne .monolith{display:none}
+  :root[data-theme="seele"] .throne .monolith{
+    display:block;width:0;height:0;border-left:34px solid transparent;border-right:34px solid transparent;
+    border-bottom:76px solid #120000;position:relative;
+    filter:drop-shadow(0 0 2px rgba(200,30,42,.4));
+  }
+  :root[data-theme="seele"] .throne .monolith::after{
+    content:attr(data-num);position:absolute;left:-10px;top:34px;color:var(--blue);
+    font-family:var(--mono);font-size:15px;font-weight:bold;letter-spacing:1px;
+    text-shadow:0 0 8px rgba(200,30,42,.9);
+  }
+  /* 神像(座す姿を記号的に) */
+  .throne .deity-fig{position:absolute;bottom:26px;width:26px;height:40px;transition:transform .4s;z-index:2}
+  .throne .deity-fig .head{width:13px;height:13px;border-radius:50%;background:var(--gold);margin:0 auto;
+    box-shadow:0 0 6px var(--gold-soft)}
+  .throne .deity-fig .body{width:24px;height:26px;margin:1px auto 0;border-radius:12px 12px 4px 4px;
+    background:linear-gradient(180deg,var(--gold),transparent);opacity:.85}
+  :root[data-theme="seele"] .throne .deity-fig{bottom:20px}
+  :root[data-theme="seele"] .throne .deity-fig .head{background:var(--blue);box-shadow:0 0 8px var(--blue)}
+  :root[data-theme="seele"] .throne .deity-fig .body{background:linear-gradient(180deg,var(--blue),transparent)}
+  /* 光輪(考え中) */
+  .throne .halo{position:absolute;bottom:44px;width:40px;height:40px;border-radius:50%;
+    border:2px solid var(--gold);opacity:0;z-index:1}
+  /* 状態: 考え中 */
+  .throne.thinking .halo{opacity:.7;animation:haloSpin 1.4s linear infinite}
+  .throne.thinking .deity-fig{transform:translateY(-2px)}
+  @keyframes haloSpin{from{transform:rotate(0) scale(.9);opacity:.3}50%{opacity:.8}to{transform:rotate(360deg) scale(1.05);opacity:.3}}
+  /* 状態: 発言中 */
+  .throne.speaking .deity-fig{transform:translateY(-4px) scale(1.08)}
+  .throne.speaking .pillar-col{box-shadow:0 0 16px var(--gold),inset 0 0 0 1px var(--gold)}
+  :root[data-theme="seele"] .throne.speaking .monolith{filter:drop-shadow(0 0 12px rgba(255,40,40,.95));animation:monoPulse 1s ease-in-out infinite}
+  .throne.speaking .glyph{color:var(--gold);text-shadow:0 0 8px var(--gold-soft)}
+  @keyframes monoPulse{50%{transform:translateY(-3px)}}
+  /* 状態: 確定 */
+  .throne.done .deity-fig .head{box-shadow:0 0 10px var(--ok)}
+  /* 状態: 障害 */
+  .throne.failed .deity-fig{opacity:.35}
+  .throne.failed .glyph{color:var(--ng)}
+  @media(prefers-reduced-motion:reduce){
+    .throne.thinking .halo{animation:none;opacity:.5}
+    :root[data-theme="seele"] .throne.speaking .monolith{animation:none}
+  }
+  .sanctum .verdict-flash{position:absolute;top:6px;left:0;right:0;text-align:center;
+    font-family:var(--mono);font-size:11px;letter-spacing:3px;color:var(--gold);opacity:.7}
+
   footer{border-top:1px solid var(--edge);padding:12px 20px;font-size:12px;color:var(--ink-dim);
     font-family:var(--mono);letter-spacing:1px}
   #viewer{position:fixed;inset:0;background:rgba(42,46,56,.55);display:none;z-index:100;padding:3vh 3vw}
@@ -209,7 +305,7 @@
 <header>
   <div class="brand">
     <span class="en">CAPITOLINE COUNCIL</span>
-    <span class="jp">カピトリーノ評議会 — CapiCo v1.2 / Private AI Agents Company</span>
+    <span class="jp">カピトリーノ評議会 — CapiCo v1.3 / Private AI Agents Company</span>
   </div>
   <div class="chair-badge" id="chair-badge">現議長: <b>—</b></div>
   <div class="mem-badge" id="mem-badge">記憶: 未読込</div>
@@ -309,6 +405,34 @@
       </div>
       <button class="btn gold" id="btn-council">評議会を招集する</button>
       <div class="note">審議結果は自動で「書庫」に保存されます(📌を付けたものは自動整理で消えません)。🌐をONにすると、ミネルヴァ神殿のsubagentがWeb検索で最新情報を確認した上で独立検証します(1審議あたり+数円〜十数円)。相場・規制・製品情報など「今」が重要な議題で推奨。</div>
+    </div>
+
+    <div class="sanctum" id="sanctum">
+      <div class="verdict-flash" id="verdict-flash"></div>
+      <div class="throne" data-throne="jupiter">
+        <div class="glyph">JUPITER</div>
+        <div class="halo"></div>
+        <div class="deity-fig"><div class="head"></div><div class="body"></div></div>
+        <div class="monolith" data-num="Ⅰ"></div>
+        <div class="pillar-col"></div>
+        <div class="seat-name" data-throne-ai="jupiter"></div>
+      </div>
+      <div class="throne" data-throne="juno">
+        <div class="glyph">JUNO</div>
+        <div class="halo"></div>
+        <div class="deity-fig"><div class="head"></div><div class="body"></div></div>
+        <div class="monolith" data-num="Ⅱ"></div>
+        <div class="pillar-col"></div>
+        <div class="seat-name" data-throne-ai="juno"></div>
+      </div>
+      <div class="throne" data-throne="minerva">
+        <div class="glyph">MINERVA</div>
+        <div class="halo"></div>
+        <div class="deity-fig"><div class="head"></div><div class="body"></div></div>
+        <div class="monolith" data-num="Ⅲ"></div>
+        <div class="pillar-col"></div>
+        <div class="seat-name" data-throne-ai="minerva"></div>
+      </div>
     </div>
 
     <div class="phase-label" id="phase1-label">PHASE 1 — 神殿内会議</div>
@@ -482,6 +606,20 @@
 
     <h2>CONFIGURATION<span class="jp">設定</span></h2>
     <div class="card">
+      <h2 style="margin-bottom:4px">THEME<span class="jp">スキン(見た目)</span></h2>
+      <div class="row">
+        <div><label for="theme-select">テーマ</label>
+          <select id="theme-select">
+            <option value="ivory">アイボリー(明るい・老眼配慮)</option>
+            <option value="temple">神殿(粗い大理石・石材)</option>
+            <option value="seele">ゼーレ(深宇宙・審問)</option>
+          </select>
+        </div>
+        <div><label class="pin-label" style="margin-top:34px"><input type="checkbox" id="anim-toggle" checked>玉座アニメーションを有効にする</label></div>
+      </div>
+      <div class="note">評議会タブの上部に、三神が石柱の前の玉座に座る様子が表示され、考え中・発言中・確定でアニメーションします。ゼーレテーマでは赤い三角モノリスⅠ・Ⅱ・Ⅲに変わります。</div>
+    </div>
+    <div class="card">
       <h2 style="margin-bottom:4px">SEAT ASSIGNMENT<span class="jp">席割当</span></h2>
       <div class="row">
         <div><label for="seat-jupiter">ユピテル席(議長)</label>
@@ -530,7 +668,7 @@
 </main>
 
 <input type="file" id="doc-file-input" multiple hidden accept=".docx,.doc,.xlsx,.xls,.xlsm,.pdf,.md,.txt,.csv,.json">
-<footer>CAPITOLINE COUNCIL v1.2 — GLOBAL SEARCH / ESCALATE TO COUNCIL / TIME MACHINE</footer>
+<footer>CAPITOLINE COUNCIL v1.3 — THREE THEMES / ANIMATED THRONES</footer>
 
 <div id="viewer" role="dialog" aria-modal="true">
   <div class="viewer-card">
@@ -1172,7 +1310,27 @@ function refreshSeatsUI(c){
     const el = p.querySelector('.seat-ai');
     if(el) el.textContent = '着席AI: ' + ENGINE_NAME[c.seats[p.dataset.seat]];
   });
+  document.querySelectorAll('[data-throne-ai]').forEach(el=>{
+    el.textContent = ENGINE_NAME[c.seats[el.dataset.throneAi]];
+  });
   updateQuickLabel(); updateCostBadge();
+}
+/* ===== テーマ&玉座 ===== */
+function applyTheme(name){
+  document.documentElement.setAttribute('data-theme', name || 'ivory');
+  localStorage.setItem('capico_theme', name || 'ivory');
+}
+function thronesEnabled(){ return localStorage.getItem('capico_anim') !== '0'; }
+function setThrone(seat, state){
+  if(!thronesEnabled()) return;
+  const el = document.querySelector(`.throne[data-throne="${seat}"]`);
+  if(!el) return;
+  el.classList.remove('thinking','speaking','done','failed');
+  if(state) el.classList.add(state);
+}
+function resetThrones(){
+  document.querySelectorAll('.throne').forEach(t=>t.classList.remove('thinking','speaking','done','failed'));
+  const vf = $('verdict-flash'); if(vf) vf.textContent = '';
 }
 $('btn-save').addEventListener('click',()=>{
   const c = {
@@ -1591,22 +1749,27 @@ $('btn-council').addEventListener('click', async ()=>{
   $('ruling-body').textContent = '審議中…';
   $('session-cost').textContent = '';
   $('phase1-label').classList.add('on');
+  resetThrones();
+  ['jupiter','juno','minerva'].forEach(seat=>setThrone(seat,'thinking'));
   const results = {};
   await Promise.all(['jupiter','juno','minerva'].map(async seat=>{
     const pel = document.querySelector(`#council-pillars .pillar[data-seat="${seat}"]`);
     pel.classList.add('testing'); pel.querySelector('.status').textContent = '審議中';
     try{
       const r = await templeMeeting(seat, agenda, tiers, agentCount,
-        (st)=>{ pel.querySelector('.status').textContent = st; },
+        (st)=>{ pel.querySelector('.status').textContent = st;
+          if(st==='見解統合中') setThrone(seat,'speaking'); },
         seat==='minerva' && $('web-council').checked);
       results[seat] = r;
       pel.classList.remove('testing'); pel.classList.add('ok');
       pel.querySelector('.status').textContent = '見解確定';
+      setThrone(seat,'done');
       renderTempleResult(r);
     }catch(e){
       results[seat] = null;
       pel.classList.remove('testing'); pel.classList.add('ng');
       pel.querySelector('.status').textContent = '障害';
+      setThrone(seat,'failed');
       pel.querySelector('.official').textContent = 'エラー: ' + e.message;
     }
   }));
@@ -1617,8 +1780,10 @@ $('btn-council').addEventListener('click', async ()=>{
     $('minerva-body').textContent = results.minerva.official + (results.minerva.minority ? '\n\n【神殿内少数意見】' + results.minerva.minority : '');
   }else{ $('minerva-body').textContent = '(ミネルヴァ神殿は障害のため欠席)'; }
   let rebuttal = '';
+  ['jupiter','juno','minerva'].forEach(s=>{ if(results[s]) setThrone(s,'done'); });
   if(results.juno && results.jupiter){
     try{
+      setThrone('juno','speaking');
       $('rebuttal-body').textContent = '反論書を作成中…';
       const sys = seatSys('juno') + ' あなたはユーノー神殿の長。ユピテル神殿の見解への反論書を作成する。';
       const prompt = `議題:\n${agenda}\n\nユピテル神殿の公式見解:\n${results.jupiter.official}\n\n自神殿の審議結果:\n${results.juno.official}\n\nユピテル見解の弱点・リスク・見落としを列挙する反論書を作成せよ。600字以内。`;
@@ -1626,8 +1791,11 @@ $('btn-council').addEventListener('click', async ()=>{
       $('rebuttal-body').textContent = rebuttal;
     }catch(e){ rebuttal = '(反論書の作成に失敗)'; $('rebuttal-body').textContent = rebuttal; }
   }else{ rebuttal = '(ユーノー神殿は障害のため反論書なし)'; $('rebuttal-body').textContent = rebuttal; }
+  if(results.juno) setThrone('juno','done');
   $('phase2-label').classList.remove('on');
   $('phase3-label').classList.add('on');
+  setThrone('jupiter','speaking');
+  const vf = $('verdict-flash'); if(vf && thronesEnabled()) vf.textContent = '── 裁定 ──';
   try{
     const minorities = ['jupiter','juno','minerva']
       .filter(s=>results[s] && results[s].minority)
@@ -1648,6 +1816,8 @@ $('btn-council').addEventListener('click', async ()=>{
     renderThread();
   }catch(e){ $('ruling-body').textContent = '最終裁定に失敗: ' + e.message; }
   $('phase3-label').classList.remove('on');
+  ['jupiter','juno','minerva'].forEach(s=>{ if(results[s]) setThrone(s,'done'); });
+  const vf2 = $('verdict-flash'); if(vf2 && thronesEnabled()) vf2.textContent = '── 裁定 確定 ──';
   renderUsage();
   btn.disabled = false; btn.textContent = '評議会を招集する';
 });
@@ -2014,6 +2184,15 @@ $('btn-restore').addEventListener('click', async ()=>{
   const el = $(id);
   el.checked = localStorage.getItem('capico_'+id) === '1';
   el.addEventListener('change', ()=> localStorage.setItem('capico_'+id, el.checked ? '1' : '0'));
+});
+/* テーマ初期化&配線 */
+applyTheme(localStorage.getItem('capico_theme') || 'ivory');
+$('theme-select').value = localStorage.getItem('capico_theme') || 'ivory';
+$('theme-select').addEventListener('change', ()=> applyTheme($('theme-select').value));
+$('anim-toggle').checked = thronesEnabled();
+$('anim-toggle').addEventListener('change', ()=>{
+  localStorage.setItem('capico_anim', $('anim-toggle').checked ? '1' : '0');
+  if(!$('anim-toggle').checked) resetThrones();
 });
 fillForm();
 renderThread();
