@@ -1,0 +1,2036 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capitoline Council — CapiCo v1.2</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --bg:#F6F2E9; --panel:#FFFFFF; --panel-2:#FBF8F1; --edge:#D8CFBB;
+    --blue:#1D5FA8; --blue-soft:#E3EDF8; --gold:#A8842C; --gold-soft:#F3E8CB;
+    --ok:#1E9E63; --ng:#C4364F; --split:#B07A1E;
+    --ink:#2A2E38; --ink-dim:#66707F;
+    --mono:"Consolas","Courier New",monospace;
+    --sans:"Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{font-size:16px}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:100vh;line-height:1.7;
+    background-image:linear-gradient(180deg, rgba(168,132,44,.05), transparent 240px)}
+  header{padding:14px 20px 10px;border-bottom:3px solid var(--gold);
+    background:linear-gradient(180deg,#FFFDF8,#F6F2E9);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .brand .en{font-family:var(--mono);font-size:21px;letter-spacing:5px;color:var(--gold);font-weight:bold}
+  .brand .jp{font-size:12px;color:var(--ink-dim);letter-spacing:2px;margin-top:2px}
+  .brand{display:flex;flex-direction:column}
+  .chair-badge{font-size:13px;color:var(--ink);border:1px solid var(--blue);
+    padding:6px 14px;border-radius:4px;background:var(--blue-soft)}
+  .chair-badge b{color:var(--blue)}
+  .mem-badge{font-size:12px;font-family:var(--mono);padding:6px 12px;border-radius:4px;border:1px solid var(--edge);color:var(--ink-dim);background:#fff}
+  .mem-badge.on{border-color:var(--ok);color:var(--ok)}
+  .mem-badge.warn2{border-color:var(--ng);color:var(--ng)}
+  .mem-badge{cursor:pointer}
+  .cost-badge{margin-left:auto;font-size:13px;font-family:var(--mono);color:var(--ink);
+    border:1px solid var(--gold);padding:6px 14px;border-radius:4px;background:#FFFBEF;cursor:pointer}
+  .cost-badge b{color:var(--gold)}
+  .cost-badge.warn{border-color:var(--ng);background:#FDECEF}
+  .cost-badge.warn b{color:var(--ng)}
+  .clock{font-family:var(--mono);font-size:12px;color:var(--ink-dim);width:100%;text-align:right}
+  @media(min-width:980px){.clock{width:auto}}
+  nav{display:flex;border-bottom:1px solid var(--edge);background:var(--panel);overflow-x:auto}
+  nav button{background:none;border:none;color:var(--ink-dim);padding:14px 18px;cursor:pointer;
+    font-family:var(--sans);font-size:15px;border-bottom:3px solid transparent;white-space:nowrap}
+  nav button:hover{color:var(--ink)}
+  nav button.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:bold}
+  main{max-width:1150px;margin:0 auto;padding:24px 16px 80px}
+  .screen{display:none}
+  .screen.active{display:block}
+  h2{font-family:var(--mono);font-size:15px;letter-spacing:3px;color:var(--gold);margin-bottom:16px}
+  h2 .jp{font-family:var(--sans);color:var(--ink-dim);font-size:13px;letter-spacing:1px;margin-left:10px}
+  .hint-read{font-size:13px;color:var(--blue);margin-bottom:10px}
+  .pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:14px 0 24px}
+  @media(max-width:820px){.pillars{grid-template-columns:1fr}}
+  .pillar{position:relative;background:var(--panel);border:1px solid var(--edge);border-top:4px solid var(--gold);
+    border-radius:4px;padding:18px 16px 14px;min-height:150px;transition:.3s;box-shadow:0 2px 6px rgba(42,46,56,.06)}
+  .pillar .deity{font-size:19px;color:var(--gold);letter-spacing:2px;font-weight:bold}
+  .pillar .deity small{font-family:var(--mono);font-size:11px;color:var(--ink-dim);letter-spacing:2px;margin-left:8px;font-weight:normal}
+  .pillar .seat-ai{margin-top:6px;font-family:var(--mono);font-size:13px;color:var(--blue)}
+  .pillar .role{font-size:13px;color:var(--ink);margin-top:8px;line-height:1.7}
+  .pillar .status{position:absolute;top:16px;right:14px;font-family:var(--mono);font-size:12px;
+    padding:3px 12px;border:1px solid var(--ink-dim);color:var(--ink-dim);border-radius:3px;background:#fff}
+  .pillar.testing{border-top-color:var(--blue)}
+  .pillar.testing .status{color:var(--blue);border-color:var(--blue);animation:pulse 1s ease-in-out infinite}
+  .pillar.ok{border-top-color:var(--ok)}
+  .pillar.ok .status{color:#fff;border-color:var(--ok);background:var(--ok)}
+  .pillar.ng{border-top-color:var(--ng)}
+  .pillar.ng .status{color:#fff;border-color:var(--ng);background:var(--ng)}
+  @keyframes pulse{50%{opacity:.35}}
+  .pillar .meta{font-family:var(--mono);font-size:12px;color:var(--ink-dim);margin-top:10px}
+  .pillar .reply{margin-top:8px;font-size:14px;line-height:1.8;max-height:200px;overflow-y:auto;
+    white-space:pre-wrap;word-break:break-word;border-top:1px dashed var(--edge);padding-top:8px}
+  .pillar .reply.err{color:var(--ng)}
+  .readable{cursor:zoom-in}
+  .readable:hover{background:var(--gold-soft)}
+  .agents{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .agent{font-size:13px;padding:4px 12px;border:1px solid var(--edge);border-radius:14px;
+    color:var(--ink-dim);background:#fff;cursor:zoom-in;transition:.2s}
+  .agent::before{content:"●";margin-right:6px;color:var(--ink-dim)}
+  .agent.think{border-color:var(--blue);color:var(--ink)}
+  .agent.think::before{color:var(--blue);animation:pulse 1s infinite}
+  .agent.done{border-color:var(--blue);color:var(--ink)}
+  .agent.done::before{color:var(--ok)}
+  .agent.err::before{color:var(--ng)}
+  .temple .official{margin-top:10px;border-top:1px dashed var(--edge);padding-top:8px;
+    font-size:14px;line-height:1.8;white-space:pre-wrap;word-break:break-word;max-height:240px;overflow-y:auto}
+  .temple .minority{margin-top:8px;font-size:13px;color:var(--split);line-height:1.7;white-space:pre-wrap}
+  details.inner{margin-top:10px;font-size:14px}
+  details.inner summary{cursor:pointer;color:var(--blue);font-size:13px}
+  details.inner .sub-op{border-left:3px solid var(--edge);padding:8px 12px;margin:8px 0;line-height:1.8;
+    white-space:pre-wrap;word-break:break-word;background:var(--panel-2);cursor:zoom-in}
+  details.inner .sub-op b{color:var(--blue)}
+  .stage2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:8px 0 20px}
+  @media(max-width:820px){.stage2{grid-template-columns:1fr}}
+  .debate{background:var(--panel);border:1px solid var(--edge);border-radius:4px;padding:16px;box-shadow:0 2px 6px rgba(42,46,56,.06)}
+  .debate h3{font-size:13px;letter-spacing:2px;color:var(--blue);margin-bottom:8px;font-family:var(--mono)}
+  .debate .body{font-size:14px;line-height:1.8;white-space:pre-wrap;word-break:break-word;max-height:280px;overflow-y:auto}
+  .ruling{border:2px solid var(--gold);background:linear-gradient(180deg,#FFFBEF,#FFF);border-radius:4px;
+    padding:20px;box-shadow:0 3px 10px rgba(168,132,44,.15)}
+  .ruling h3{font-family:var(--mono);letter-spacing:3px;color:var(--gold);font-size:14px;margin-bottom:10px}
+  .ruling .body{font-size:15px;line-height:1.9;white-space:pre-wrap;word-break:break-word}
+  .session-cost{margin-top:12px;font-family:var(--mono);font-size:14px;color:var(--gold);text-align:right}
+  .card{background:var(--panel);border:1px solid var(--edge);border-radius:4px;padding:20px;margin-bottom:16px;
+    box-shadow:0 2px 6px rgba(42,46,56,.06)}
+  label{display:block;font-size:13px;color:var(--ink-dim);margin:12px 0 4px}
+  input[type=text],input[type=password],input[type=number],textarea,select{
+    width:100%;background:#fff;border:1px solid var(--edge);color:var(--ink);
+    padding:11px 12px;font-family:var(--mono);font-size:15px;border-radius:4px}
+  textarea{font-family:var(--sans);font-size:15px;line-height:1.8}
+  input:focus,textarea:focus,select:focus{outline:2px solid var(--blue);border-color:var(--blue)}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row > div{flex:1;min-width:190px}
+  .keyrow{display:flex;gap:8px}
+  .keyrow input{flex:1}
+  .price-row{display:flex;gap:8px;align-items:center;margin:6px 0;flex-wrap:wrap}
+  .price-row .plabel{width:120px;font-size:13px;color:var(--ink-dim)}
+  .price-row input{width:110px;padding:7px 8px;font-size:14px}
+  .price-row span{font-size:12px;color:var(--ink-dim)}
+  .btn{background:var(--blue);color:#fff;border:none;padding:13px 26px;cursor:pointer;
+    font-family:var(--sans);font-size:16px;font-weight:bold;letter-spacing:1px;margin-top:14px;border-radius:4px}
+  .btn:hover{filter:brightness(1.1)}
+  .btn:disabled{background:#9CB4CE;cursor:wait}
+  .btn.ghost{background:#fff;border:1px solid var(--ink-dim);color:var(--ink);font-weight:normal;
+    padding:9px 14px;font-size:13px;margin-top:0}
+  .btn.gold{background:var(--gold)}
+  .note{font-size:13px;color:var(--ink-dim);line-height:1.9;margin-top:10px}
+  .note b{color:var(--gold)}
+  .note.warn{color:var(--ng)}
+  .saved-msg{color:var(--ok);font-size:14px;margin-left:12px}
+  .phase-label{font-family:var(--mono);font-size:12px;letter-spacing:2px;color:var(--ink-dim);margin:18px 0 8px}
+  .phase-label.on{color:var(--blue);font-weight:bold}
+  .chat-box{background:var(--panel);border:1px solid var(--edge);border-radius:4px;min-height:320px;max-height:56vh;
+    overflow-y:auto;padding:16px;margin-bottom:12px}
+  .msg{margin-bottom:16px;max-width:94%}
+  .msg .who{font-family:var(--mono);font-size:11px;letter-spacing:2px;margin-bottom:4px}
+  .msg.user{margin-left:auto;text-align:right}
+  .msg.user .who{color:var(--ink-dim)}
+  .msg.user .body{display:inline-block;text-align:left;background:var(--blue-soft);
+    border:1px solid #B9CFE8;padding:12px 14px;border-radius:6px;font-size:15px;line-height:1.8}
+  .msg.ai .who{color:var(--gold)}
+  .msg.ai .body{display:inline-block;background:#FFFBEF;border:1px solid var(--gold-soft);
+    padding:12px 14px;border-radius:6px;font-size:15px;line-height:1.8;white-space:pre-wrap;word-break:break-word}
+  .msg.ai .body.err{border-color:var(--ng);color:var(--ng)}
+  .chat-input{display:flex;gap:8px;align-items:flex-end}
+  .chat-input textarea{flex:1;resize:vertical}
+  .tier-bar{display:flex;gap:6px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+  .tier-bar span{font-size:13px;color:var(--ink-dim)}
+  .tier{background:#fff;border:1px solid var(--edge);color:var(--ink-dim);padding:6px 16px;
+    cursor:pointer;font-size:14px;border-radius:4px}
+  .tier.active{border-color:var(--gold);color:var(--gold);font-weight:bold;background:var(--gold-soft)}
+  /* 巻物バー */
+  .scroll-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;
+    background:var(--panel);border:1px solid var(--edge);border-radius:4px;padding:10px 12px}
+  .scroll-bar select{flex:1;min-width:160px;width:auto}
+  .scroll-bar .pin-label{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--ink-dim);white-space:nowrap}
+  .scroll-bar input[type=checkbox]{width:18px;height:18px}
+  /* 書庫 */
+  .arch-item{display:flex;gap:10px;align-items:center;border:1px solid var(--edge);border-radius:4px;
+    background:#fff;padding:12px 14px;margin-bottom:8px;flex-wrap:wrap}
+  .arch-item .when{font-family:var(--mono);font-size:12px;color:var(--ink-dim);white-space:nowrap}
+  .arch-item .title{flex:1;min-width:180px;font-size:14px;cursor:zoom-in;color:var(--blue)}
+  .arch-item .title:hover{text-decoration:underline}
+  .arch-item .cost{font-family:var(--mono);font-size:12px;color:var(--gold);white-space:nowrap}
+  .arch-item .pin-label{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-dim);white-space:nowrap}
+  .arch-item input[type=checkbox]{width:17px;height:17px}
+  table.usage{width:100%;border-collapse:collapse;margin-top:8px;font-size:14px}
+  table.usage th,table.usage td{border:1px solid var(--edge);padding:8px 10px;text-align:right;font-family:var(--mono)}
+  table.usage th{background:var(--panel-2);font-family:var(--sans);text-align:center}
+  table.usage td:first-child{text-align:left;font-family:var(--sans)}
+  details.memsec{border:1px solid var(--edge);border-radius:4px;margin-bottom:10px;background:#fff}
+  details.memsec summary{cursor:pointer;padding:12px 14px;font-size:15px;font-weight:bold;color:var(--blue)}
+  details.memsec .inner-pad{padding:0 14px 14px}
+  details.memsec textarea{min-height:110px}
+  /* 書類かばん */
+  .dropzone{
+    border:2px dashed var(--gold);border-radius:6px;background:#FFFDF6;
+    padding:16px;text-align:center;color:var(--ink-dim);font-size:14px;cursor:pointer;transition:.2s;
+  }
+  .dropzone.hover{background:var(--gold-soft);border-color:var(--blue);color:var(--ink)}
+  .dropzone b{color:var(--gold)}
+  .doc-list{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+  .doc-chip{display:flex;align-items:center;gap:10px;border:1px solid var(--edge);border-radius:4px;
+    background:#fff;padding:8px 12px;font-size:13px;flex-wrap:wrap}
+  .doc-chip input[type=checkbox]{width:17px;height:17px}
+  .doc-chip .dname{flex:1;min-width:140px;cursor:zoom-in;color:var(--blue)}
+  .doc-chip .dname:hover{text-decoration:underline}
+  .doc-chip .dmeta{font-family:var(--mono);font-size:11px;color:var(--ink-dim);white-space:nowrap}
+  .doc-chip .ddel{background:none;border:1px solid var(--ng);color:var(--ng);border-radius:3px;
+    cursor:pointer;font-size:12px;padding:2px 8px}
+  .doc-total{font-family:var(--mono);font-size:12px;color:var(--ink-dim);margin-top:6px}
+  footer{border-top:1px solid var(--edge);padding:12px 20px;font-size:12px;color:var(--ink-dim);
+    font-family:var(--mono);letter-spacing:1px}
+  #viewer{position:fixed;inset:0;background:rgba(42,46,56,.55);display:none;z-index:100;padding:3vh 3vw}
+  #viewer.open{display:flex;align-items:center;justify-content:center}
+  .viewer-card{background:#FFFDF6;border:2px solid var(--gold);border-radius:8px;width:min(900px,96vw);
+    max-height:92vh;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+  .viewer-head{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--edge)}
+  .viewer-head .vtitle{font-size:15px;font-weight:bold;color:var(--gold);flex:1;min-width:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .viewer-head button{background:#fff;border:1px solid var(--edge);border-radius:4px;cursor:pointer;
+    font-size:15px;padding:6px 14px;color:var(--ink)}
+  .viewer-head .vclose{border-color:var(--ng);color:var(--ng);font-weight:bold}
+  .viewer-body{padding:20px 26px;overflow-y:auto;font-size:20px;line-height:2.1;
+    white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="en">CAPITOLINE COUNCIL</span>
+    <span class="jp">カピトリーノ評議会 — CapiCo v1.2 / Private AI Agents Company</span>
+  </div>
+  <div class="chair-badge" id="chair-badge">現議長: <b>—</b></div>
+  <div class="mem-badge" id="mem-badge">記憶: 未読込</div>
+  <div class="mem-badge" id="sync-badge" title="クリックで今すぐ同期">同期: —</div>
+  <div class="cost-badge" id="cost-badge">今月: <b>¥0</b></div>
+  <div class="clock" id="clock"></div>
+</header>
+
+<nav>
+  <button data-screen="quick" class="active">快答</button>
+  <button data-screen="council">評議会</button>
+  <button data-screen="archive">書庫</button>
+  <button data-screen="memory">記憶・問診</button>
+  <button data-screen="test">疎通テスト</button>
+  <button data-screen="settings">設定・コスト</button>
+</nav>
+
+<main>
+
+  <!-- 快答モード -->
+  <section class="screen active" id="screen-quick">
+    <h2>QUICK ORACLE<span class="jp">快答モード — 議長が即答します</span></h2>
+
+    <div class="scroll-bar">
+      <span style="font-size:13px;color:var(--ink-dim)">📜巻物:</span>
+      <select id="scroll-select"></select>
+      <button class="btn ghost" id="btn-scroll-new">＋新規</button>
+      <button class="btn ghost" id="btn-scroll-rename">改名</button>
+      <button class="btn ghost" id="btn-scroll-del">削除</button>
+      <label class="pin-label"><input type="checkbox" id="scroll-pin">📌大事(削除保護)</label>
+    </div>
+
+    <details class="memsec" style="margin-bottom:12px">
+      <summary>📎 書類かばん — 資料を読み込ませる(Word/Excel/PDF/MD等)</summary>
+      <div class="inner-pad">
+        <div class="dropzone" data-dz>ここにファイルを<b>ドラッグ&ドロップ</b><br>またはクリックして選択(.docx / .xlsx / .pdf / .md / .txt / .csv)</div>
+        <div class="doc-list" data-doclist></div>
+        <div class="doc-total" data-doctotal></div>
+        <div class="note">✔を付けた資料の内容を、快答・評議会・継続審議のすべてのAIが参照します。資料はこの画面を開いている間だけ有効です(クラウドには保存されません)。⚠患者個人情報を含むファイルは読み込ませないでください。</div>
+      </div>
+    </details>
+
+    <div class="tier-bar">
+      <span>出力:</span>
+      <button class="tier" data-tier="eco">省エネ</button>
+      <button class="tier active" data-tier="std">標準</button>
+      <button class="tier" data-tier="max">最高出力</button>
+      <label class="pin-label" style="margin-left:8px"><input type="checkbox" id="web-quick">🌐Web検索</label>
+      <span id="quick-model-label" style="margin-left:auto;font-family:var(--mono);font-size:12px"></span>
+    </div>
+    <div class="chat-box" id="chat-box"></div>
+    <div class="chat-input">
+      <textarea id="quick-input" rows="2" placeholder="質問・相談を入力(Ctrl+Enterで送信)"></textarea>
+      <button class="btn" id="btn-quick" style="margin-top:0">送信</button>
+    </div>
+    <div class="note"><span id="quick-cost"></span>
+      <button class="btn ghost" id="btn-brief" style="font-size:12px;padding:4px 10px;border-color:var(--gold);color:var(--gold)">🌅 朝礼</button>
+      <button class="btn ghost" id="btn-escalate" style="font-size:12px;padding:4px 10px;border-color:var(--blue);color:var(--blue)">⚖️ この相談を評議会へ昇格</button>
+      <button class="btn ghost" id="btn-learn" style="font-size:12px;padding:4px 10px">💡この会話を記憶に反映</button>
+      <button class="btn ghost" id="btn-clear-chat" style="font-size:12px;padding:4px 10px">この巻物を白紙に</button>
+    </div>
+  </section>
+
+  <!-- 評議会モード -->
+  <section class="screen" id="screen-council">
+    <h2>COUNCIL SESSION<span class="jp">評議会モード — 三神殿の討議</span></h2>
+    <div class="card">
+      <label for="agenda">議題(相談・判断したいことを具体的に)</label>
+      <textarea id="agenda" rows="3" placeholder="例: 〇〇の導入を進めるべきか。予算は△△、懸念は□□。"></textarea>
+      <details class="memsec" style="margin-top:12px">
+        <summary>📎 書類かばん — 審議資料を読み込ませる</summary>
+        <div class="inner-pad">
+          <div class="dropzone" data-dz>ここにファイルを<b>ドラッグ&ドロップ</b><br>またはクリックして選択(.docx / .xlsx / .pdf / .md / .txt / .csv)</div>
+          <div class="doc-list" data-doclist></div>
+          <div class="doc-total" data-doctotal></div>
+        </div>
+      </details>
+      <div class="row" style="margin-top:8px">
+        <div>
+          <label for="council-mode">審議の深さ</label>
+          <select id="council-mode">
+            <option value="std">評議会(標準)</option>
+            <option value="max">深慮(最高出力)</option>
+          </select>
+        </div>
+        <div>
+          <label for="agent-count">各神殿のsubagent数</label>
+          <select id="agent-count">
+            <option value="auto">自動(長が3〜5名を編成)</option>
+            <option value="3">3名</option><option value="4">4名</option><option value="5">5名</option>
+          </select>
+        </div>
+        <div>
+          <label>最新情報</label>
+          <label class="pin-label" style="margin-top:10px"><input type="checkbox" id="web-council">🌐 ミネルヴァ神殿がWeb検索して検証</label>
+        </div>
+      </div>
+      <button class="btn gold" id="btn-council">評議会を招集する</button>
+      <div class="note">審議結果は自動で「書庫」に保存されます(📌を付けたものは自動整理で消えません)。🌐をONにすると、ミネルヴァ神殿のsubagentがWeb検索で最新情報を確認した上で独立検証します(1審議あたり+数円〜十数円)。相場・規制・製品情報など「今」が重要な議題で推奨。</div>
+    </div>
+
+    <div class="phase-label" id="phase1-label">PHASE 1 — 神殿内会議</div>
+    <div class="pillars" id="council-pillars">
+      <div class="pillar temple" data-seat="jupiter">
+        <div class="deity">ユピテル<small>JUPITER</small></div>
+        <div class="seat-ai"></div><div class="status">待機</div>
+        <div class="agents"></div>
+        <div class="official readable" data-vtitle="ユピテル神殿 公式見解"></div>
+        <div class="minority readable" data-vtitle="ユピテル神殿 少数意見"></div>
+        <div class="inner-holder"></div>
+      </div>
+      <div class="pillar temple" data-seat="juno">
+        <div class="deity">ユーノー<small>JUNO</small></div>
+        <div class="seat-ai"></div><div class="status">待機</div>
+        <div class="agents"></div>
+        <div class="official readable" data-vtitle="ユーノー神殿 公式見解"></div>
+        <div class="minority readable" data-vtitle="ユーノー神殿 少数意見"></div>
+        <div class="inner-holder"></div>
+      </div>
+      <div class="pillar temple" data-seat="minerva">
+        <div class="deity">ミネルヴァ<small>MINERVA</small></div>
+        <div class="seat-ai"></div><div class="status">待機</div>
+        <div class="agents"></div>
+        <div class="official readable" data-vtitle="ミネルヴァ神殿 公式見解"></div>
+        <div class="minority readable" data-vtitle="ミネルヴァ神殿 少数意見"></div>
+        <div class="inner-holder"></div>
+      </div>
+    </div>
+
+    <div class="phase-label" id="phase2-label">PHASE 2 — 評議会討議</div>
+    <div class="stage2">
+      <div class="debate"><h3>JUNO — 反論書</h3><div class="body readable" id="rebuttal-body" data-vtitle="ユーノー 反論書">—</div></div>
+      <div class="debate"><h3>MINERVA — 独立見解</h3><div class="body readable" id="minerva-body" data-vtitle="ミネルヴァ 独立見解">—</div></div>
+    </div>
+
+    <div class="phase-label" id="phase3-label">PHASE 3 — 最終裁定</div>
+    <div class="ruling"><h3>JUPITER — FINAL RULING</h3>
+      <div class="body readable" id="ruling-body" data-vtitle="最終裁定">議題を入力して評議会を招集してください。</div>
+      <div class="session-cost" id="session-cost"></div>
+    </div>
+
+    <div class="phase-label" style="margin-top:24px">PHASE 4 — 継続審議(裁定への質問・修正要望・次のステップ指示)</div>
+    <div class="card">
+      <div class="chat-box" id="council-thread" style="min-height:120px;max-height:44vh"></div>
+      <div class="chat-input">
+        <textarea id="council-followup" rows="2" placeholder="裁定への質問・修正要望・次のステップ指示を入力(Ctrl+Enterで議長対話)"></textarea>
+      </div>
+      <div class="row">
+        <div><button class="btn" id="btn-cont-chat">続きを聞く(議長対話)</button></div>
+        <div><button class="btn gold" id="btn-cont-council">三神殿で再審議</button></div>
+        <div><button class="btn ghost" id="btn-workorder" style="margin-top:14px">📋 実行指示書を作成</button></div>
+      </div>
+      <div class="note">「続きを聞く」=議長が全経緯を踏まえ即答(数円・数秒)。「再審議」=これまでの経緯+追加指示を織り込んで三神殿の全工程をやり直し(数十円・数分、書庫に新記録として保存)。「実行指示書」=この審議の結論を、Claude(Pro/Cowork)に貼り付けて実行させるための作業指示書に変換します。継続審議の全経緯は書庫に保存され、書庫の「再開」からいつでも続きを行えます。</div>
+    </div>
+  </section>
+
+  <!-- 書庫 -->
+  <section class="screen" id="screen-archive">
+    <h2>ARCHIVES<span class="jp">書庫 — 過去の評議会の記録</span></h2>
+    <div class="card">
+      <label for="global-search">🔎 横断検索(全巻物+全評議会から探す)</label>
+      <div class="keyrow">
+        <input type="text" id="global-search" placeholder="キーワードを入力(例: ORT / 職業紹介 / 有休)">
+        <button class="btn ghost" id="btn-global-search">検索</button>
+      </div>
+      <div class="doc-list" id="search-results"></div>
+    </div>
+    <div class="hint-read">💡 議題名をクリックすると、三神殿の見解・反論書・最終裁定の全文を大きな文字で読み返せます</div>
+    <div class="card">
+      <div id="arch-list"></div>
+      <div class="note">保存上限は50件。上限を超えると<b>📌が付いていないもの</b>から古い順に自動削除されます。📌付きは自動整理で消えません(手動削除は可能)。書庫の内容もクラウド同期されます。</div>
+    </div>
+  </section>
+
+  <!-- 記憶・問診 -->
+  <section class="screen" id="screen-memory">
+    <h2>ARCHIVES &amp; INQUIRY<span class="jp">記憶・問診 — CapiCoの記憶中枢</span></h2>
+
+    <div class="card">
+      <h2 style="margin-bottom:4px">CLOUD SYNC<span class="jp">クラウド同期(記憶+巻物+書庫を丸ごと同期)</span></h2>
+      <label for="gh-token">GitHubアクセストークン(gist権限)</label>
+      <div class="keyrow"><input type="password" id="gh-token" placeholder="ghp_ または github_pat_..."><button class="btn ghost" data-toggle="gh-token">表示</button></div>
+      <label for="gist-id">Gist ID(初回保存時に自動発行。2台目以降はここに貼る)</label>
+      <input type="text" id="gist-id" placeholder="(未発行)">
+      <label for="mem-pass">暗号化パスフレーズ(全端末で同じものを使用)</label>
+      <div class="keyrow"><input type="password" id="mem-pass" placeholder="長めの合言葉"><button class="btn ghost" data-toggle="mem-pass">表示</button></div>
+      <div class="row">
+        <div><button class="btn" id="btn-mem-push">☁ クラウドへ保存</button></div>
+        <div><button class="btn" id="btn-mem-pull">⬇ クラウドから読込</button></div>
+        <div><button class="btn ghost" id="btn-sync-save" style="margin-top:14px">同期設定のみ保存</button></div>
+        <div><button class="btn ghost" id="btn-restore" style="margin-top:14px">⏪ 過去の版から復元</button></div>
+      </div>
+      <div class="note" id="sync-status">同期未設定。v0.6からは記憶に加え、巻物(会話)と書庫(評議会ログ)も丸ごと同期されます。</div>
+      <div class="note warn">⚠ 患者の個人情報(氏名・特定可能な症例情報)は絶対に記入しないでください。</div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom:4px">MEMORY VAULT<span class="jp">記憶の内容(編集可・全AIが毎回参照)</span></h2>
+      <div id="mem-sections"></div>
+      <button class="btn" id="btn-mem-local">この端末に保存</button>
+      <span class="saved-msg" id="mem-saved"></span>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom:4px">INQUIRY<span class="jp">今日の問診(回答は記憶に自動追記)</span></h2>
+      <div id="inquiry-holder"><button class="btn gold" id="btn-inquiry">問診を受ける(3問・1分)</button></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom:4px">EXPORT<span class="jp">記憶書の書き出し(Claude Pro連携・バックアップ用)</span></h2>
+      <div class="row">
+        <div><button class="btn ghost" id="btn-export-md" style="margin-top:14px">📄 記憶書(.md)をダウンロード</button></div>
+        <div><button class="btn ghost" id="btn-export-copy" style="margin-top:14px">📋 記憶書をコピー</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 疎通テスト -->
+  <section class="screen" id="screen-test">
+    <h2>TRIAD LINK TEST<span class="jp">三柱 疎通テスト</span></h2>
+    <div class="pillars">
+      <div class="pillar" data-seat="jupiter">
+        <div class="deity">ユピテル<small>JUPITER</small></div>
+        <div class="seat-ai"></div><div class="status">待機</div>
+        <div class="role">主神。議長・起案・最終裁定を司る。</div>
+        <div class="meta"></div><div class="reply readable" data-vtitle="ユピテルの応答"></div>
+      </div>
+      <div class="pillar" data-seat="juno">
+        <div class="deity">ユーノー<small>JUNO</small></div>
+        <div class="seat-ai"></div><div class="status">待機</div>
+        <div class="role">守護の女神。常設反対役。</div>
+        <div class="meta"></div><div class="reply readable" data-vtitle="ユーノーの応答"></div>
+      </div>
+      <div class="pillar" data-seat="minerva">
+        <div class="deity">ミネルヴァ<small>MINERVA</small></div>
+        <div class="seat-ai"></div><div class="status">待機</div>
+        <div class="role">知恵の女神。独立検証。</div>
+        <div class="meta"></div><div class="reply readable" data-vtitle="ミネルヴァの応答"></div>
+      </div>
+    </div>
+    <div class="card">
+      <label for="test-msg">テスト送信文</label>
+      <textarea id="test-msg" rows="2">あなたはカピトリーノ評議会の一員です。自分の席の神名を名乗り、着任の挨拶を一言だけ日本語で述べてください。</textarea>
+      <button class="btn gold" id="btn-test">三柱 疎通テスト実行</button>
+    </div>
+  </section>
+
+  <!-- 設定・コスト -->
+  <section class="screen" id="screen-settings">
+    <h2>USAGE &amp; COST<span class="jp">今月の使用量・概算コスト</span></h2>
+    <div class="card">
+      <div id="usage-table-holder"></div>
+      <div class="row" style="margin-top:6px">
+        <div><button class="btn ghost" onclick="window.open('https://console.anthropic.com','_blank')">Anthropic請求画面</button></div>
+        <div><button class="btn ghost" onclick="window.open('https://platform.openai.com/usage','_blank')">OpenAI使用量画面</button></div>
+        <div><button class="btn ghost" onclick="window.open('https://console.cloud.google.com/billing','_blank')">Google請求画面</button></div>
+      </div>
+      <button class="btn ghost" id="btn-reset-usage" style="margin-top:14px">今月の記録をリセット</button>
+    </div>
+
+    <h2>SELF-DIAGNOSIS<span class="jp">エラーログ・自己診断</span></h2>
+    <div class="card">
+      <div id="errlog-holder" class="doc-list"></div>
+      <div class="row">
+        <div><button class="btn gold" id="btn-err-analyze" style="margin-top:14px">🩺 AIに原因分析と改善策を出させる</button></div>
+        <div><button class="btn ghost" id="btn-err-clear" style="margin-top:14px">ログを消去</button></div>
+      </div>
+      <div class="note">全AI呼び出しの失敗が自動記録されます(最新100件)。評議会でsubagentが失敗した場合は自動で①3秒後に再挑戦→②それでも駄目ならClaudeが代打し、欠落があれば神殿の公式見解にその旨が明記されます。</div>
+    </div>
+
+    <h2>CONFIGURATION<span class="jp">設定</span></h2>
+    <div class="card">
+      <h2 style="margin-bottom:4px">SEAT ASSIGNMENT<span class="jp">席割当</span></h2>
+      <div class="row">
+        <div><label for="seat-jupiter">ユピテル席(議長)</label>
+          <select id="seat-jupiter"><option value="claude">Claude</option><option value="gpt">ChatGPT</option><option value="gemini">Gemini</option></select></div>
+        <div><label for="seat-juno">ユーノー席(反対役)</label>
+          <select id="seat-juno"><option value="gpt">ChatGPT</option><option value="claude">Claude</option><option value="gemini">Gemini</option></select></div>
+        <div><label for="seat-minerva">ミネルヴァ席(独立検証)</label>
+          <select id="seat-minerva"><option value="gemini">Gemini</option><option value="claude">Claude</option><option value="gpt">ChatGPT</option></select></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2 style="margin-bottom:4px">API KEYS &amp; MODELS<span class="jp">APIキーと3段モデル</span></h2>
+      <label for="key-claude">Anthropic APIキー</label>
+      <div class="keyrow"><input type="password" id="key-claude" placeholder="sk-ant-..."><button class="btn ghost" data-toggle="key-claude">表示</button></div>
+      <div class="row">
+        <div><label>省エネ</label><input type="text" id="m-claude-eco" value="claude-haiku-4-5-20251001"></div>
+        <div><label>標準</label><input type="text" id="m-claude-std" value="claude-sonnet-4-6"></div>
+        <div><label>最高出力</label><input type="text" id="m-claude-max" value="claude-opus-4-8"></div>
+      </div>
+      <label for="key-gpt" style="margin-top:20px">OpenAI APIキー</label>
+      <div class="keyrow"><input type="password" id="key-gpt" placeholder="sk-..."><button class="btn ghost" data-toggle="key-gpt">表示</button></div>
+      <div class="row">
+        <div><label>省エネ</label><input type="text" id="m-gpt-eco" value="gpt-5-mini"></div>
+        <div><label>標準</label><input type="text" id="m-gpt-std" value="gpt-5.1"></div>
+        <div><label>最高出力</label><input type="text" id="m-gpt-max" value="gpt-5.1"></div>
+      </div>
+      <label for="key-gemini" style="margin-top:20px">Google AI APIキー</label>
+      <div class="keyrow"><input type="password" id="key-gemini" placeholder="AIza..."><button class="btn ghost" data-toggle="key-gemini">表示</button></div>
+      <div class="row">
+        <div><label>省エネ</label><input type="text" id="m-gemini-eco" value="gemini-2.5-flash-lite"></div>
+        <div><label>標準</label><input type="text" id="m-gemini-std" value="gemini-2.5-flash"></div>
+        <div><label>最高出力</label><input type="text" id="m-gemini-max" value="gemini-2.5-flash"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2 style="margin-bottom:4px">PRICE TABLE<span class="jp">単価表・為替・月次上限</span></h2>
+      <div id="price-holder"></div>
+      <div class="row" style="margin-top:10px">
+        <div><label for="fx-rate">為替(円/ドル)</label><input type="number" id="fx-rate" step="0.1" value="155"></div>
+        <div><label for="cap-yen">月次警告ライン(円)</label><input type="number" id="cap-yen" step="1000" value="15000"></div>
+      </div>
+      <button class="btn" id="btn-save">すべての設定を保存</button><span class="saved-msg" id="saved-msg"></span>
+    </div>
+  </section>
+
+</main>
+
+<input type="file" id="doc-file-input" multiple hidden accept=".docx,.doc,.xlsx,.xls,.xlsm,.pdf,.md,.txt,.csv,.json">
+<footer>CAPITOLINE COUNCIL v1.2 — GLOBAL SEARCH / ESCALATE TO COUNCIL / TIME MACHINE</footer>
+
+<div id="viewer" role="dialog" aria-modal="true">
+  <div class="viewer-card">
+    <div class="viewer-head">
+      <span class="vtitle" id="vtitle">全文表示</span>
+      <button id="v-smaller">A−</button><button id="v-bigger">A＋</button>
+      <button class="vclose" id="v-close">閉じる ✕</button>
+    </div>
+    <div class="viewer-body" id="vbody"></div>
+  </div>
+</div>
+
+<script>
+/* ========= 共通 ========= */
+const $ = id => document.getElementById(id);
+setInterval(()=>{ $('clock').textContent = new Date().toLocaleString('ja-JP'); },1000);
+document.querySelectorAll('nav button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    $('screen-'+b.dataset.screen).classList.add('active');
+    if(b.dataset.screen === 'archive') renderArchive();
+  });
+});
+document.querySelectorAll('[data-toggle]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const inp = $(b.dataset.toggle);
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    b.textContent = inp.type === 'password' ? '表示' : '隠す';
+  });
+});
+$('cost-badge').addEventListener('click', ()=>{ document.querySelector('nav button[data-screen="settings"]').click(); });
+
+/* ========= ビューア ========= */
+let vSize = parseInt(localStorage.getItem('capico_viewer_font')||'20',10);
+function applyVSize(){ $('vbody').style.fontSize = vSize+'px'; localStorage.setItem('capico_viewer_font', vSize); }
+function openViewer(title, text){
+  if(!text || !text.trim()) return;
+  $('vtitle').textContent = title || '全文表示';
+  $('vbody').textContent = text;
+  applyVSize();
+  $('viewer').classList.add('open');
+}
+$('v-close').addEventListener('click', ()=> $('viewer').classList.remove('open'));
+$('viewer').addEventListener('click', e=>{ if(e.target === $('viewer')) $('viewer').classList.remove('open'); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') $('viewer').classList.remove('open'); });
+$('v-bigger').addEventListener('click', ()=>{ vSize = Math.min(32, vSize+2); applyVSize(); });
+$('v-smaller').addEventListener('click', ()=>{ vSize = Math.max(14, vSize-2); applyVSize(); });
+document.addEventListener('click', e=>{
+  const el = e.target.closest('.readable, .agent.done, .agent.err, .sub-op');
+  if(!el) return;
+  if(el.classList.contains('agent')) openViewer('subagent: '+el.textContent, el.dataset.opinion || '(発言データなし)');
+  else if(el.classList.contains('sub-op')) openViewer('神殿内発言: '+(el.querySelector('b')?.textContent||''), el.textContent);
+  else openViewer(el.dataset.vtitle || '全文表示', el.textContent);
+});
+
+/* ========= 書類かばん ========= */
+if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+let DOCS = [];
+const DOC_CAP_FILE = 60000, DOC_CAP_TOTAL = 45000;
+function docsContext(){
+  const on = DOCS.filter(d=>d.on);
+  if(on.length === 0) return '';
+  let parts = [], used = 0;
+  for(const d of on){
+    let t = d.text;
+    if(used + t.length > DOC_CAP_TOTAL) t = t.slice(0, Math.max(0, DOC_CAP_TOTAL - used)) + '\n(容量上限のため以下省略)';
+    used += t.length;
+    parts.push(`--- 資料「${d.name}」ここから ---\n${t}\n--- 資料「${d.name}」ここまで ---`);
+    if(used >= DOC_CAP_TOTAL) break;
+  }
+  return `\n\n=== 主宰が添付した資料(回答の参考にせよ) ===\n${parts.join('\n\n')}\n=== 資料ここまで ===`;
+}
+function renderDocs(){
+  document.querySelectorAll('[data-doclist]').forEach(list=>{
+    list.innerHTML = '';
+    DOCS.forEach(d=>{
+      const chip = document.createElement('div'); chip.className = 'doc-chip';
+      const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = d.on;
+      cb.addEventListener('change', ()=>{ d.on = cb.checked; renderDocs(); });
+      const name = document.createElement('span'); name.className = 'dname'; name.textContent = d.name;
+      name.addEventListener('click', ()=> openViewer('資料: '+d.name, d.text));
+      const meta = document.createElement('span'); meta.className = 'dmeta';
+      meta.textContent = Math.max(1, Math.round(d.text.length/1000)) + '千字';
+      const del = document.createElement('button'); del.className = 'ddel'; del.textContent = '✕';
+      del.addEventListener('click', ()=>{ DOCS = DOCS.filter(x=>x.id !== d.id); renderDocs(); });
+      chip.appendChild(cb); chip.appendChild(name); chip.appendChild(meta); chip.appendChild(del);
+      list.appendChild(chip);
+    });
+  });
+  const onDocs = DOCS.filter(d=>d.on);
+  const total = onDocs.reduce((a,d)=>a+d.text.length, 0);
+  document.querySelectorAll('[data-doctotal]').forEach(el=>{
+    el.textContent = DOCS.length === 0 ? '' :
+      `参照中: ${onDocs.length}/${DOCS.length}件・約${Math.round(Math.min(total, DOC_CAP_TOTAL)/1000)}千字を毎回の回答時に送信`;
+  });
+}
+async function extractFile(f){
+  const ext = (f.name.split('.').pop()||'').toLowerCase();
+  const cap = t => t.length > DOC_CAP_FILE ? t.slice(0, DOC_CAP_FILE) + '\n(長文のため以下省略)' : t;
+  if(['md','txt','csv','json'].includes(ext)) return cap(await f.text());
+  if(ext === 'pdf'){
+    if(!window.pdfjsLib) throw new Error('PDF解析ライブラリ未読込(インターネット接続を確認)');
+    const pdf = await pdfjsLib.getDocument({data: await f.arrayBuffer()}).promise;
+    let t = '';
+    for(let p=1; p<=pdf.numPages; p++){
+      const page = await pdf.getPage(p);
+      const tc = await page.getTextContent();
+      t += tc.items.map(i=>i.str).join(' ') + '\n';
+      if(t.length > DOC_CAP_FILE) break;
+    }
+    if(!t.trim()) throw new Error('文字を抽出できません(画像スキャンPDFの可能性)');
+    return cap(t);
+  }
+  if(ext === 'docx'){
+    if(!window.mammoth) throw new Error('Word解析ライブラリ未読込(インターネット接続を確認)');
+    const r = await mammoth.extractRawText({arrayBuffer: await f.arrayBuffer()});
+    return cap(r.value);
+  }
+  if(['xlsx','xls','xlsm'].includes(ext)){
+    if(!window.XLSX) throw new Error('Excel解析ライブラリ未読込(インターネット接続を確認)');
+    const wb = XLSX.read(await f.arrayBuffer());
+    let t = '';
+    wb.SheetNames.forEach(n=>{ t += `【シート: ${n}】\n` + XLSX.utils.sheet_to_csv(wb.Sheets[n]) + '\n'; });
+    return cap(t);
+  }
+  if(ext === 'doc') throw new Error('旧形式(.doc)は未対応。Wordで.docx形式に保存し直してください');
+  return cap(await f.text());
+}
+async function handleFiles(files){
+  for(const f of files){
+    try{
+      const text = await extractFile(f);
+      DOCS.push({id:'d'+Date.now()+Math.random(), name:f.name, text, on:true});
+    }catch(e){ alert(f.name + ' の読込に失敗: ' + e.message); }
+  }
+  renderDocs();
+}
+document.querySelectorAll('[data-dz]').forEach(dz=>{
+  dz.addEventListener('click', ()=> $('doc-file-input').click());
+  dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.classList.add('hover'); });
+  dz.addEventListener('dragleave', ()=> dz.classList.remove('hover'));
+  dz.addEventListener('drop', e=>{ e.preventDefault(); dz.classList.remove('hover'); handleFiles(e.dataTransfer.files); });
+});
+$('doc-file-input').addEventListener('change', e=>{ handleFiles(e.target.files); e.target.value = ''; });
+
+/* ========= 自動同期エンジン ========= */
+let syncDirty = false, syncTimer = null, syncBusy = false;
+function syncReady(){ const s = syncConf(); return !!(s.ghToken && s.gistId && s.pass); }
+function setSyncBadge(cls, text){
+  const b = $('sync-badge'); if(!b) return;
+  b.textContent = text;
+  b.classList.toggle('on', cls === 'ok');
+  b.classList.toggle('warn2', cls === 'dirty');
+}
+function markDirty(){
+  if(!syncReady()){ setSyncBadge('off','同期: 未設定'); return; }
+  syncDirty = true;
+  setSyncBadge('dirty','☁ 同期待ち…');
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(autoPush, 4000);
+}
+async function autoPush(){
+  if(!syncDirty || syncBusy || !syncReady()) return;
+  syncBusy = true;
+  setSyncBadge('dirty','☁ 同期中…');
+  try{
+    const s = syncConf();
+    const bundle = {fmt:2, savedAt:new Date().toISOString(), mem:loadMem(), scrolls:loadScrolls(), sess:loadSess()};
+    const cipher = await encryptText(s.pass, JSON.stringify(bundle));
+    const res = await fetch('https://api.github.com/gists/'+s.gistId, {
+      method:'PATCH',
+      headers:{'Authorization':'token '+s.ghToken, 'Content-Type':'application/json', 'Accept':'application/vnd.github+json'},
+      body: JSON.stringify({files:{'capico_memory.enc':{content:cipher}}})
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    syncDirty = false;
+    setSyncBadge('ok','☁ 同期済 '+new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}));
+  }catch(e){
+    setSyncBadge('dirty','⚠ 同期失敗(自動再試行)');
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(autoPush, 20000);
+  }
+  syncBusy = false;
+}
+async function autoPull(){
+  if(!syncReady() || syncDirty || syncBusy) return;
+  syncBusy = true;
+  const ok = await memPull(true);
+  syncBusy = false;
+  if(ok) setSyncBadge('ok','☁ 同期済 '+new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}));
+}
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible') autoPull();
+});
+window.addEventListener('beforeunload', e=>{
+  if(syncDirty){ e.preventDefault(); e.returnValue = ''; }
+});
+
+/* ========= 設定 ========= */
+const CONF_KEY = 'capico_config_v1';
+const ENGINE_NAME = {claude:'Claude', gpt:'ChatGPT', gemini:'Gemini'};
+const DEITY = {jupiter:'ユピテル', juno:'ユーノー', minerva:'ミネルヴァ'};
+const TIER_JP = {eco:'省エネ', std:'標準', max:'最高出力'};
+function loadConfig(){ try{ return JSON.parse(localStorage.getItem(CONF_KEY)) || {}; }catch(e){ return {}; } }
+function defaults(){
+  return {
+    seats:{jupiter:'claude', juno:'gpt', minerva:'gemini'},
+    keys:{claude:'', gpt:'', gemini:''},
+    models:{
+      claude:{eco:'claude-haiku-4-5-20251001', std:'claude-sonnet-4-6', max:'claude-opus-4-8'},
+      gpt:{eco:'gpt-5-mini', std:'gpt-5.1', max:'gpt-5.1'},
+      gemini:{eco:'gemini-2.5-flash-lite', std:'gemini-2.5-flash', max:'gemini-2.5-flash'}
+    },
+    prices:{
+      claude:{eco:{i:1,o:5}, std:{i:3,o:15}, max:{i:5,o:25}},
+      gpt:{eco:{i:0.25,o:2}, std:{i:1.25,o:10}, max:{i:1.25,o:10}},
+      gemini:{eco:{i:0.10,o:0.40}, std:{i:0.30,o:2.50}, max:{i:0.30,o:2.50}}
+    },
+    fx:155, capYen:15000,
+    sync:{ghToken:'', gistId:'', pass:''}
+  };
+}
+function deepMerge(base, over){
+  if(typeof over !== 'object' || over === null) return over !== undefined ? over : base;
+  const out = Array.isArray(base) ? [...base] : {...base};
+  for(const k in over){ out[k] = deepMerge(base ? base[k] : undefined, over[k]); }
+  return out;
+}
+function getConf(){ return deepMerge(defaults(), loadConfig()); }
+
+/* ========= 記憶中枢 ========= */
+const MEM_KEY = 'capico_memory_v1';
+const MEM_SECTIONS = [
+  {key:'basic',   label:'① 基本情報(氏名・住所・連絡先・家族)', ph:''},
+  {key:'work',    label:'② 職場情報(医院名・住所・電話・診療体制・関連法人)', ph:''},
+  {key:'staff',   label:'③ 職員情報(職種・勤務体系・特記事項)', ph:''},
+  {key:'business',label:'④ 事業・プロジェクト状況(LUNA・CapiCo・進行中の案件)', ph:''},
+  {key:'prefs',   label:'⑤ 応対ルール(全AIへの恒久指示)', ph:''},
+  {key:'persona', label:'⑥ 性格分析・嗜好(AI観察・承認済み)', ph:''},
+  {key:'health',  label:'⑦ 問診・体調・生活(問診の回答が自動追記)', ph:''},
+  {key:'log',     label:'⑧ 学習した事実(時系列メモ)', ph:''}
+];
+const DEFAULT_PREFS = `・結論を必ず先に述べる(結論→理由→詳細の順)
+・重要な情報は聞かれなくても先回りして提示する
+・一度答えてもらった事は再質問しない(記憶を参照する)
+・先読み・深読みをして、気の利く有能な同僚として振る舞う
+・改善案・改造アイデアがあれば積極的に提案する
+・大事な数字や期限は【】で目立たせる`;
+function loadMem(){
+  try{
+    const m = JSON.parse(localStorage.getItem(MEM_KEY)) || {};
+    if(!m.sections) m.sections = {};
+    if(m.sections.prefs === undefined) m.sections.prefs = DEFAULT_PREFS;
+    return m;
+  }catch(e){ return {sections:{prefs:DEFAULT_PREFS}}; }
+}
+function saveMem(m){ m.updated = new Date().toISOString(); localStorage.setItem(MEM_KEY, JSON.stringify(m)); refreshMemBadge(); markDirty(); }
+function refreshMemBadge(){
+  const m = loadMem();
+  const filled = MEM_SECTIONS.filter(s=>(m.sections[s.key]||'').trim()).length;
+  const b = $('mem-badge');
+  b.textContent = filled > 0 ? `記憶: ${filled}/8区分` : '記憶: 未設定';
+  b.classList.toggle('on', filled > 0);
+}
+function buildMemUI(){
+  const holder = $('mem-sections');
+  holder.innerHTML = '';
+  const m = loadMem();
+  MEM_SECTIONS.forEach(s=>{
+    const det = document.createElement('details'); det.className = 'memsec';
+    const sum = document.createElement('summary'); sum.textContent = s.label; det.appendChild(sum);
+    const pad = document.createElement('div'); pad.className = 'inner-pad';
+    const ta = document.createElement('textarea'); ta.id = 'mem-'+s.key;
+    ta.value = m.sections[s.key] || ''; ta.placeholder = s.ph;
+    pad.appendChild(ta); det.appendChild(pad); holder.appendChild(det);
+  });
+}
+$('btn-mem-local').addEventListener('click', ()=>{
+  const m = loadMem();
+  MEM_SECTIONS.forEach(s=>{ m.sections[s.key] = $('mem-'+s.key).value; });
+  saveMem(m);
+  $('mem-saved').textContent = 'この端末に保存しました';
+  setTimeout(()=> $('mem-saved').textContent = '', 3000);
+});
+function memoryContext(){
+  const m = loadMem();
+  let parts = [];
+  MEM_SECTIONS.forEach(s=>{
+    const v = (m.sections[s.key]||'').trim();
+    if(v) parts.push(`【${s.label}】\n${v}`);
+  });
+  if(parts.length === 0) return '';
+  let ctx = parts.join('\n\n');
+  if(ctx.length > 7000) ctx = ctx.slice(0, 7000) + '\n(以下省略)';
+  return `\n\n=== 主宰の記憶データ(全回答の前提とせよ。応対ルールは厳守) ===\n${ctx}\n=== 記憶ここまで ===`;
+}
+
+/* ========= 巻物(話題別会話) ========= */
+const SCROLL_KEY = 'capico_scrolls_v1';
+const OLD_HIST_KEY = 'capico_quick_history_v1';
+function loadScrolls(){
+  try{
+    let s = JSON.parse(localStorage.getItem(SCROLL_KEY));
+    if(!s || !Array.isArray(s.list) || s.list.length === 0){
+      /* 旧v0.5の履歴を「既定の巻物」として移行 */
+      let oldHist = [];
+      try{ oldHist = JSON.parse(localStorage.getItem(OLD_HIST_KEY)) || []; }catch(e){}
+      s = {list:[{id:'s'+Date.now(), name:'日常', pinned:false,
+        created:new Date().toISOString(), updated:new Date().toISOString(), hist:oldHist}], activeId:null};
+      s.activeId = s.list[0].id;
+      localStorage.setItem(SCROLL_KEY, JSON.stringify(s));
+    }
+    if(!s.activeId || !s.list.find(x=>x.id===s.activeId)) s.activeId = s.list[0].id;
+    return s;
+  }catch(e){
+    const s = {list:[{id:'s'+Date.now(), name:'日常', pinned:false,
+      created:new Date().toISOString(), updated:new Date().toISOString(), hist:[]}], activeId:null};
+    s.activeId = s.list[0].id;
+    return s;
+  }
+}
+function saveScrolls(s){
+  /* 各巻物の履歴上限: 100メッセージ(約50往復)。古い発言から切り捨て */
+  s.list.forEach(sc=>{ if(sc.hist.length > 100) sc.hist = sc.hist.slice(-100); });
+  /* 巻物数上限: 20。📌なしの更新が古いものから削除 */
+  while(s.list.length > 20){
+    const un = s.list.filter(x=>!x.pinned && x.id !== s.activeId)
+      .sort((a,b)=>(a.updated||'').localeCompare(b.updated||''));
+    if(un.length === 0) break;
+    s.list = s.list.filter(x=>x.id !== un[0].id);
+  }
+  localStorage.setItem(SCROLL_KEY, JSON.stringify(s));
+  markDirty();
+}
+function activeScroll(){
+  const s = loadScrolls();
+  return s.list.find(x=>x.id === s.activeId);
+}
+function renderScrollBar(){
+  const s = loadScrolls();
+  const sel = $('scroll-select');
+  sel.innerHTML = '';
+  s.list.slice().sort((a,b)=>(b.updated||'').localeCompare(a.updated||'')).forEach(sc=>{
+    const o = document.createElement('option');
+    o.value = sc.id; o.textContent = (sc.pinned?'📌':'') + sc.name;
+    if(sc.id === s.activeId) o.selected = true;
+    sel.appendChild(o);
+  });
+  const act = s.list.find(x=>x.id===s.activeId);
+  $('scroll-pin').checked = !!(act && act.pinned);
+}
+function renderChat(){
+  const box = $('chat-box');
+  box.innerHTML = '';
+  const sc = activeScroll();
+  if(!sc || sc.hist.length === 0){
+    renderMsg('ai', '巻物「'+(sc?sc.name:'')+'」は白紙です。何でもお尋ねください。', false, false);
+  }else{
+    sc.hist.forEach(m=>renderMsg(m.role, m.content, false, false));
+  }
+}
+$('scroll-select').addEventListener('change', ()=>{
+  const s = loadScrolls();
+  s.activeId = $('scroll-select').value;
+  saveScrolls(s);
+  renderScrollBar(); renderChat();
+});
+$('btn-scroll-new').addEventListener('click', ()=>{
+  const name = prompt('新しい巻物の名前(例: LUNA事業 / 医院経営 / 雑談)');
+  if(!name) return;
+  const s = loadScrolls();
+  const sc = {id:'s'+Date.now(), name:name.trim(), pinned:false,
+    created:new Date().toISOString(), updated:new Date().toISOString(), hist:[]};
+  s.list.push(sc); s.activeId = sc.id;
+  saveScrolls(s); renderScrollBar(); renderChat();
+});
+$('btn-scroll-rename').addEventListener('click', ()=>{
+  const s = loadScrolls();
+  const sc = s.list.find(x=>x.id===s.activeId);
+  const name = prompt('巻物の新しい名前', sc.name);
+  if(!name) return;
+  sc.name = name.trim();
+  saveScrolls(s); renderScrollBar();
+});
+$('btn-scroll-del').addEventListener('click', ()=>{
+  const s = loadScrolls();
+  if(s.list.length <= 1){ alert('最後の1本は削除できません'); return; }
+  const sc = s.list.find(x=>x.id===s.activeId);
+  if(!confirm('巻物「'+sc.name+'」を完全に削除しますか?(元に戻せません)')) return;
+  s.list = s.list.filter(x=>x.id !== sc.id);
+  s.activeId = s.list[0].id;
+  saveScrolls(s); renderScrollBar(); renderChat();
+});
+$('scroll-pin').addEventListener('change', ()=>{
+  const s = loadScrolls();
+  const sc = s.list.find(x=>x.id===s.activeId);
+  sc.pinned = $('scroll-pin').checked;
+  saveScrolls(s); renderScrollBar();
+});
+
+/* ========= 暗号化 ========= */
+async function deriveKey(pass, salt){
+  const enc = new TextEncoder();
+  const km = await crypto.subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2', salt, iterations:200000, hash:'SHA-256'}, km,
+    {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']);
+}
+const b64 = a => btoa(String.fromCharCode(...new Uint8Array(a)));
+const unb64 = s => Uint8Array.from(atob(s), c=>c.charCodeAt(0));
+async function encryptText(pass, text){
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(pass, salt);
+  const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, new TextEncoder().encode(text));
+  return JSON.stringify({v:1, salt:b64(salt), iv:b64(iv), data:b64(ct)});
+}
+async function decryptText(pass, payload){
+  const p = JSON.parse(payload);
+  const key = await deriveKey(pass, unb64(p.salt));
+  const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:unb64(p.iv)}, key, unb64(p.data));
+  return new TextDecoder().decode(pt);
+}
+
+/* ========= Gist同期(記憶+巻物+書庫) ========= */
+function syncConf(){ return getConf().sync; }
+function saveSyncConf(){
+  const c = getConf();
+  c.sync = {ghToken:$('gh-token').value.trim(), gistId:$('gist-id').value.trim(), pass:$('mem-pass').value};
+  localStorage.setItem(CONF_KEY, JSON.stringify(c));
+}
+$('btn-sync-save').addEventListener('click', ()=>{
+  saveSyncConf();
+  $('sync-status').textContent = '同期設定を保存しました。';
+});
+async function memPush(){
+  saveSyncConf();
+  const s = syncConf();
+  if(!s.ghToken || !s.pass){ alert('GitHubトークンとパスフレーズを入力してください'); return; }
+  const m = loadMem();
+  MEM_SECTIONS.forEach(sec=>{ const el = $('mem-'+sec.key); if(el) m.sections[sec.key] = el.value; });
+  saveMem(m);
+  $('sync-status').textContent = '暗号化してクラウドへ保存中…';
+  try{
+    const bundle = {fmt:2, savedAt:new Date().toISOString(), mem:m, scrolls:loadScrolls(), sess:loadSess()};
+    const cipher = await encryptText(s.pass, JSON.stringify(bundle));
+    const body = {description:'CapiCo encrypted memory', files:{'capico_memory.enc':{content:cipher}}};
+    let res;
+    if(s.gistId){
+      res = await fetch('https://api.github.com/gists/'+s.gistId, {
+        method:'PATCH',
+        headers:{'Authorization':'token '+s.ghToken, 'Content-Type':'application/json', 'Accept':'application/vnd.github+json'},
+        body: JSON.stringify(body)
+      });
+    }else{
+      body.public = false;
+      res = await fetch('https://api.github.com/gists', {
+        method:'POST',
+        headers:{'Authorization':'token '+s.ghToken, 'Content-Type':'application/json', 'Accept':'application/vnd.github+json'},
+        body: JSON.stringify(body)
+      });
+    }
+    const data = await res.json();
+    if(!res.ok) throw new Error('GitHub応答 '+res.status+': '+(data.message||''));
+    if(!s.gistId && data.id){ $('gist-id').value = data.id; saveSyncConf(); }
+    syncDirty = false;
+    setSyncBadge('ok','☁ 同期済 '+new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}));
+    $('sync-status').textContent = '✅ クラウド保存完了(' + new Date().toLocaleString('ja-JP') + ')。記憶+巻物+書庫を同期しました。';
+  }catch(e){
+    $('sync-status').textContent = '❌ 保存失敗: ' + e.message;
+  }
+}
+async function memPull(silent){
+  const s = syncConf();
+  if(!s.ghToken || !s.gistId || !s.pass){ if(!silent) alert('トークン・Gist ID・パスフレーズの3点が必要です'); return false; }
+  if(!silent) $('sync-status').textContent = 'クラウドから読込中…';
+  try{
+    const res = await fetch('https://api.github.com/gists/'+s.gistId, {
+      headers:{'Authorization':'token '+s.ghToken, 'Accept':'application/vnd.github+json'}
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error('GitHub応答 '+res.status+': '+(data.message||''));
+    const file = data.files && data.files['capico_memory.enc'];
+    if(!file) throw new Error('記憶ファイルが見つかりません');
+    const plain = await decryptText(s.pass, file.content);
+    const obj = JSON.parse(plain);
+    if(obj.fmt === 2){
+      localStorage.setItem(MEM_KEY, JSON.stringify(obj.mem||{sections:{}}));
+      if(obj.scrolls) localStorage.setItem(SCROLL_KEY, JSON.stringify(obj.scrolls));
+      if(obj.sess) localStorage.setItem(SESS_KEY, JSON.stringify(obj.sess));
+    }else{
+      /* v0.5形式(記憶のみ)との後方互換 */
+      localStorage.setItem(MEM_KEY, JSON.stringify(obj));
+    }
+    buildMemUI(); refreshMemBadge(); renderScrollBar(); renderChat();
+    syncDirty = false;
+    setSyncBadge('ok','☁ 同期済 '+new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}));
+    $('sync-status').textContent = '✅ クラウドから読込完了(記憶+巻物+書庫)';
+    return true;
+  }catch(e){
+    $('sync-status').textContent = '❌ 読込失敗: ' + e.message + '(パスフレーズ違いの可能性もあります)';
+    return false;
+  }
+}
+$('btn-mem-push').addEventListener('click', memPush);
+$('btn-mem-pull').addEventListener('click', ()=>memPull(false));
+
+/* ========= 問診 ========= */
+const INQ_POOL = [
+  '最近の体調・睡眠はいかがですか?',
+  '今週、最優先で片付けたいことは何ですか?',
+  '医院の運営で今いちばん気になっていることは?',
+  '最近うれしかったこと・うまくいったことは?',
+  'CapiCoやAI活用で不満・改善してほしい点は?',
+  '直近1ヶ月の予定で大きなもの(学会・出張・イベント等)は?',
+  'ご家族や身の回りで共有しておきたい変化はありますか?',
+  '今のストレス度を10段階でいうと?その主な原因は?'
+];
+$('btn-inquiry').addEventListener('click', ()=>{
+  const holder = $('inquiry-holder');
+  const start = parseInt(localStorage.getItem('capico_inq_idx')||'0',10);
+  const qs = [0,1,2].map(i=>INQ_POOL[(start+i) % INQ_POOL.length]);
+  localStorage.setItem('capico_inq_idx', String((start+3) % INQ_POOL.length));
+  holder.innerHTML = '';
+  const inputs = qs.map(q=>{
+    const l = document.createElement('label'); l.textContent = q;
+    const ta = document.createElement('textarea'); ta.rows = 2;
+    holder.appendChild(l); holder.appendChild(ta);
+    return {q, ta};
+  });
+  const done = document.createElement('button'); done.className = 'btn gold'; done.textContent = '回答を記憶に保存';
+  done.addEventListener('click', ()=>{
+    const m = loadMem();
+    const today = new Date().toLocaleDateString('ja-JP');
+    let add = `\n[${today} 問診]`;
+    inputs.forEach(x=>{ if(x.ta.value.trim()) add += `\n・${x.q} → ${x.ta.value.trim()}`; });
+    m.sections.health = (m.sections.health||'') + add;
+    saveMem(m); buildMemUI();
+    holder.innerHTML = '<div class="note">✅ 記憶に保存しました。「☁クラウドへ保存」もお忘れなく。</div>';
+  });
+  holder.appendChild(done);
+});
+
+/* ========= 記憶書エクスポート ========= */
+function buildMemoirMd(){
+  const m = loadMem();
+  let md = `# 福ちゃん記憶書(CapiCo Export)\n更新: ${new Date().toLocaleString('ja-JP')}\n\nこの文書は主宰のプライベートAI「CapiCo」の記憶データです。以後の回答の前提として扱い、応対ルールを厳守してください。\n`;
+  MEM_SECTIONS.forEach(s=>{
+    const v = (m.sections[s.key]||'').trim();
+    if(v) md += `\n## ${s.label}\n${v}\n`;
+  });
+  return md;
+}
+$('btn-export-md').addEventListener('click', ()=>{
+  const blob = new Blob([buildMemoirMd()], {type:'text/markdown'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '福ちゃん記憶書.md';
+  a.click();
+});
+$('btn-export-copy').addEventListener('click', async ()=>{
+  try{ await navigator.clipboard.writeText(buildMemoirMd()); alert('記憶書をコピーしました。'); }
+  catch(e){ openViewer('記憶書(手動でコピーしてください)', buildMemoirMd()); }
+});
+
+/* ========= 使用量記録 ========= */
+const USAGE_KEY = 'capico_usage_v1';
+function monthKeyStr(){ const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
+function loadUsage(){ try{ return JSON.parse(localStorage.getItem(USAGE_KEY)) || {}; }catch(e){ return {}; } }
+function saveUsage(u){ localStorage.setItem(USAGE_KEY, JSON.stringify(u)); }
+function recordUsage(engine, tier, inTok, outTok){
+  const c = getConf();
+  const p = c.prices[engine][tier];
+  const costYen = ((inTok/1e6)*p.i + (outTok/1e6)*p.o) * c.fx;
+  const u = loadUsage(); const mk = monthKeyStr();
+  if(!u[mk]) u[mk] = {};
+  if(!u[mk][engine]) u[mk][engine] = {inTok:0, outTok:0, yen:0, calls:0};
+  u[mk][engine].inTok += inTok; u[mk][engine].outTok += outTok;
+  u[mk][engine].yen += costYen; u[mk][engine].calls += 1;
+  saveUsage(u); updateCostBadge();
+  return costYen;
+}
+function monthTotals(){
+  const u = loadUsage()[monthKeyStr()] || {};
+  let total = 0; const per = {};
+  for(const e of ['claude','gpt','gemini']){ per[e] = u[e] || {inTok:0,outTok:0,yen:0,calls:0}; total += per[e].yen; }
+  return {total, per};
+}
+function updateCostBadge(){
+  const {total, per} = monthTotals();
+  const c = getConf();
+  const b = $('cost-badge');
+  b.innerHTML = `今月: <b>¥${Math.round(total).toLocaleString()}</b>`
+    + ` <span style="font-size:11px;color:var(--ink-dim)">(C¥${Math.round(per.claude.yen)}/G¥${Math.round(per.gpt.yen)}/M¥${Math.round(per.gemini.yen)})</span>`;
+  b.classList.toggle('warn', total >= c.capYen);
+}
+function renderUsage(){
+  const {total, per} = monthTotals();
+  let html = `<table class="usage"><tr><th>系統</th><th>呼出回数</th><th>入力トークン</th><th>出力トークン</th><th>概算(円)</th></tr>`;
+  for(const e of ['claude','gpt','gemini']){
+    html += `<tr><td>${ENGINE_NAME[e]}</td><td>${per[e].calls.toLocaleString()}</td><td>${per[e].inTok.toLocaleString()}</td><td>${per[e].outTok.toLocaleString()}</td><td>¥${Math.round(per[e].yen).toLocaleString()}</td></tr>`;
+  }
+  html += `<tr><td><b>合計(${monthKeyStr()})</b></td><td></td><td></td><td></td><td><b>¥${Math.round(total).toLocaleString()}</b></td></tr></table>`;
+  $('usage-table-holder').innerHTML = html;
+}
+$('btn-reset-usage').addEventListener('click', ()=>{
+  if(!confirm('今月の使用量記録をリセットします。よろしいですか?')) return;
+  const u = loadUsage(); delete u[monthKeyStr()]; saveUsage(u);
+  renderUsage(); updateCostBadge();
+});
+
+/* ========= 単価表UI・設定フォーム ========= */
+function buildPriceUI(){
+  const c = getConf();
+  const holder = $('price-holder');
+  holder.innerHTML = '';
+  for(const e of ['claude','gpt','gemini']) for(const t of ['eco','std','max']){
+    const row = document.createElement('div'); row.className = 'price-row';
+    row.innerHTML = `<span class="plabel">${ENGINE_NAME[e]}・${TIER_JP[t]}</span>
+      入力 <input type="number" step="0.01" id="p-${e}-${t}-i" value="${c.prices[e][t].i}">
+      出力 <input type="number" step="0.01" id="p-${e}-${t}-o" value="${c.prices[e][t].o}"> <span>$/1M</span>`;
+    holder.appendChild(row);
+  }
+}
+function fillForm(){
+  const c = getConf();
+  $('seat-jupiter').value = c.seats.jupiter; $('seat-juno').value = c.seats.juno; $('seat-minerva').value = c.seats.minerva;
+  $('key-claude').value = c.keys.claude; $('key-gpt').value = c.keys.gpt; $('key-gemini').value = c.keys.gemini;
+  for(const e of ['claude','gpt','gemini']) for(const t of ['eco','std','max']) $(`m-${e}-${t}`).value = c.models[e][t];
+  $('fx-rate').value = c.fx; $('cap-yen').value = c.capYen;
+  $('gh-token').value = c.sync.ghToken; $('gist-id').value = c.sync.gistId; $('mem-pass').value = c.sync.pass;
+  buildPriceUI(); refreshSeatsUI(c); renderUsage(); buildMemUI(); refreshMemBadge();
+  renderScrollBar(); renderChat();
+}
+function refreshSeatsUI(c){
+  $('chair-badge').innerHTML = '現議長: <b>ユピテル(' + ENGINE_NAME[c.seats.jupiter] + ')</b>';
+  document.querySelectorAll('.pillar').forEach(p=>{
+    const el = p.querySelector('.seat-ai');
+    if(el) el.textContent = '着席AI: ' + ENGINE_NAME[c.seats[p.dataset.seat]];
+  });
+  updateQuickLabel(); updateCostBadge();
+}
+$('btn-save').addEventListener('click',()=>{
+  const c = {
+    seats:{jupiter:$('seat-jupiter').value, juno:$('seat-juno').value, minerva:$('seat-minerva').value},
+    keys:{claude:$('key-claude').value.trim(), gpt:$('key-gpt').value.trim(), gemini:$('key-gemini').value.trim()},
+    models:{}, prices:{}, fx: parseFloat($('fx-rate').value)||155, capYen: parseFloat($('cap-yen').value)||15000,
+    sync:{ghToken:$('gh-token').value.trim(), gistId:$('gist-id').value.trim(), pass:$('mem-pass').value}
+  };
+  for(const e of ['claude','gpt','gemini']){
+    c.models[e] = {eco:$(`m-${e}-eco`).value.trim(), std:$(`m-${e}-std`).value.trim(), max:$(`m-${e}-max`).value.trim()};
+    c.prices[e] = {};
+    for(const t of ['eco','std','max']) c.prices[e][t] = {i: parseFloat($(`p-${e}-${t}-i`).value)||0, o: parseFloat($(`p-${e}-${t}-o`).value)||0};
+  }
+  localStorage.setItem(CONF_KEY, JSON.stringify(c));
+  $('saved-msg').textContent = '保存しました';
+  setTimeout(()=> $('saved-msg').textContent = '', 4000);
+  refreshSeatsUI(getConf()); renderUsage();
+});
+
+/* ========= エンジン呼び出し ========= */
+function apiErr(status, msg){
+  let hint = '';
+  if(status === 401 || status === 403) hint = 'APIキーが無効か権限不足です。';
+  else if(status === 404) hint = 'モデル名が見つかりません。';
+  else if(status === 429) hint = '混雑/レート制限(自動再送も失敗)。';
+  else if(status >= 500) hint = 'API側の一時障害の可能性。';
+  const e = new Error(`[HTTP ${status}] ${hint} ${msg || ''}`);
+  e.status = status;
+  return e;
+}
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+const gemGate = {active:0, queue:[]};
+async function gemAcquire(){
+  if(gemGate.active < 2){ gemGate.active++; return; }
+  await new Promise(r=>gemGate.queue.push(r));
+  gemGate.active++;
+}
+function gemRelease(){
+  gemGate.active = Math.max(0, gemGate.active-1);
+  const r = gemGate.queue.shift();
+  if(r) r();
+}
+async function withRetry(fn){
+  const waits = [2000, 5000, 12000];
+  for(let i=0; i<=waits.length; i++){
+    try{ return await fn(); }
+    catch(e){
+      if((e.status===429 || e.status===503 || e.status===529) && i < waits.length){ await sleep(waits[i]); continue; }
+      throw e;
+    }
+  }
+}
+const ERR_KEY = 'capico_errlog_v1';
+function loadErr(){ try{ return JSON.parse(localStorage.getItem(ERR_KEY)) || []; }catch(e){ return []; } }
+function errLog(engine, model, tier, msg){
+  const list = loadErr();
+  list.push({ts:new Date().toISOString(), engine, model, tier, msg:(msg||'').slice(0,300)});
+  localStorage.setItem(ERR_KEY, JSON.stringify(list.slice(-100)));
+  if(typeof renderErrLog === 'function') renderErrLog();
+}
+async function callEngine(engine, tier, systemText, messages, maxTokens, web){
+  try{
+    return await callEngineRaw(engine, tier, systemText, messages, maxTokens, web);
+  }catch(e){
+    try{ errLog(engine, getConf().models[engine][tier], tier, e.message); }catch(_){}
+    throw e;
+  }
+}
+async function callEngineRaw(engine, tier, systemText, messages, maxTokens, web){
+  const c = getConf();
+  const model = c.models[engine][tier];
+  const key = c.keys[engine];
+  if(!key) throw new Error('APIキー未設定('+ENGINE_NAME[engine]+')');
+  if(engine === 'claude'){
+    return withRetry(async ()=>{
+      const body = {model, max_tokens:maxTokens||1500, system:systemText, messages};
+      if(web) body.tools = [{type:'web_search_20250305', name:'web_search', max_uses:3}];
+      const res = await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':key,
+          'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if(!res.ok) throw apiErr(res.status, data?.error?.message);
+      if(data.usage) recordUsage('claude', tier, data.usage.input_tokens||0, data.usage.output_tokens||0);
+      return (data.content||[]).filter(x=>x.type==='text').map(x=>x.text).join('\n') || '(空応答)';
+    });
+  }
+  if(engine === 'gpt'){
+    return withRetry(async ()=>{
+      const res = await fetch('https://api.openai.com/v1/chat/completions',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+        body: JSON.stringify({model, max_completion_tokens:maxTokens||1500,
+          messages:[{role:'system',content:systemText}, ...messages]})
+      });
+      const data = await res.json();
+      if(!res.ok) throw apiErr(res.status, data?.error?.message);
+      if(data.usage) recordUsage('gpt', tier, data.usage.prompt_tokens||0, data.usage.completion_tokens||0);
+      return data.choices?.[0]?.message?.content || '(空応答)';
+    });
+  }
+  if(engine === 'gemini'){
+    await gemAcquire();
+    try{
+      return await withRetry(async ()=>{
+        const url = 'https://generativelanguage.googleapis.com/v1beta/models/'
+          + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(key);
+        const contents = messages.map(m=>({role: m.role==='assistant'?'model':'user', parts:[{text:m.content}]}));
+        const gbody = {systemInstruction:{parts:[{text:systemText}]}, contents};
+        if(web) gbody.tools = [{google_search:{}}];
+        const res = await fetch(url,{
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(gbody)
+        });
+        const data = await res.json();
+        if(!res.ok) throw apiErr(res.status, data?.error?.message);
+        const um = data.usageMetadata;
+        if(um) recordUsage('gemini', tier, um.promptTokenCount||0, (um.candidatesTokenCount||0)+(um.thoughtsTokenCount||0));
+        return data.candidates?.[0]?.content?.parts?.map(p=>p.text).join('\n') || '(空応答)';
+      });
+    } finally { gemRelease(); }
+  }
+  throw new Error('不明なエンジン: '+engine);
+}
+function parseJSONLoose(text){
+  let t = text.replace(/```json|```/g,'').trim();
+  const s = t.indexOf('{'); const e2 = t.lastIndexOf('}');
+  if(s >= 0 && e2 > s) t = t.slice(s, e2+1);
+  return JSON.parse(t);
+}
+
+/* ========= 席のシステムプロンプト ========= */
+const SEAT_BASE = {
+  jupiter:'あなたはカピトリーノ評議会(CapiCo)のユピテル(JUPITER)。主神として議長・起案・最終裁定を司る。',
+  juno:'あなたはカピトリーノ評議会(CapiCo)のユーノー(JUNO)。守護の女神として常設反対役を務め、あらゆるリスクと欠陥を指摘する。',
+  minerva:'あなたはカピトリーノ評議会(CapiCo)のミネルヴァ(MINERVA)。知恵の女神として他者の意見を見ずに独立検証を行う。'
+};
+function seatSys(seat, withMem){
+  return SEAT_BASE[seat] + (withMem === false ? '' : (memoryContext() + docsContext()));
+}
+
+/* ========= 疎通テスト ========= */
+$('btn-test').addEventListener('click', async ()=>{
+  const c = getConf();
+  const msg = $('test-msg').value.trim();
+  const btn = $('btn-test');
+  const scope = $('screen-test');
+  btn.disabled = true; btn.textContent = '評議会 招集中…';
+  await Promise.all(['jupiter','juno','minerva'].map(async seat=>{
+    const engine = c.seats[seat];
+    const model = c.models[engine].std;
+    const el = scope.querySelector(`.pillar[data-seat="${seat}"]`);
+    el.classList.remove('ok','ng'); el.classList.add('testing');
+    el.querySelector('.status').textContent = '応答待ち';
+    el.querySelector('.meta').textContent = `${ENGINE_NAME[engine]} / ${model}`;
+    el.querySelector('.reply').textContent = '';
+    const t0 = performance.now();
+    try{
+      const reply = await callEngine(engine,'std', seatSys(seat,false), [{role:'user',content:msg}], 300);
+      el.classList.remove('testing'); el.classList.add('ok');
+      el.querySelector('.status').textContent = '稼働';
+      el.querySelector('.meta').textContent = `${ENGINE_NAME[engine]} / ${model} / ${Math.round(performance.now()-t0)}ms`;
+      el.querySelector('.reply').textContent = reply;
+    }catch(e){
+      el.classList.remove('testing'); el.classList.add('ng');
+      el.querySelector('.status').textContent = '障害';
+      el.querySelector('.reply').textContent = e.message;
+      el.querySelector('.reply').classList.add('err');
+    }
+  }));
+  btn.disabled = false; btn.textContent = '三柱 疎通テスト実行';
+});
+
+/* ========= 書庫(評議会ログ) ========= */
+const SESS_KEY = 'capico_council_sessions_v1';
+function loadSess(){ try{ return JSON.parse(localStorage.getItem(SESS_KEY)) || []; }catch(e){ return []; } }
+function saveSess(list){
+  /* 上限50件: 📌なしの古いものから削除 */
+  while(list.length > 50){
+    let idx = -1;
+    for(let i=0; i<list.length; i++){ if(!list[i].pinned){ idx = i; break; } }
+    if(idx === -1) break;
+    list.splice(idx, 1);
+  }
+  localStorage.setItem(SESS_KEY, JSON.stringify(list));
+  markDirty();
+}
+/* ===== 継続審議のセッション管理 ===== */
+let curSessId = null;
+function getSessById(id){ return loadSess().find(x=>x.id===id); }
+function updateSessObj(sess){
+  const all = loadSess();
+  const i = all.findIndex(x=>x.id === sess.id);
+  if(i >= 0){ all[i] = sess; localStorage.setItem(SESS_KEY, JSON.stringify(all)); markDirty(); }
+}
+function sessionContextText(s, maxLen){
+  let t = `【元の議題】${s.agenda}\n`;
+  for(const seat of ['jupiter','juno','minerva']){
+    const tp = s.temples && s.temples[seat];
+    if(tp) t += `【${DEITY[seat]}公式見解】${tp.official}\n`;
+  }
+  t += `【ユーノー反論書】${s.rebuttal||''}\n【最終裁定】${s.ruling||''}\n`;
+  if(s.thread && s.thread.length){
+    t += '【継続審議の経緯】\n' + s.thread.map(m=>(m.role==='user'?'主宰: ':'議長: ')+m.content).join('\n') + '\n';
+  }
+  const cap = maxLen || 9000;
+  if(t.length > cap) t = '(前略)' + t.slice(-cap);
+  return t;
+}
+function renderThreadMsg(role, text, isErr){
+  const box = $('council-thread');
+  const div = document.createElement('div');
+  div.className = 'msg ' + (role==='user'?'user':'ai');
+  const who = document.createElement('div'); who.className = 'who';
+  who.textContent = role==='user' ? 'YOU' : 'ユピテル';
+  const body = document.createElement('div'); body.className = 'body readable'+(isErr?' err':'');
+  body.dataset.vtitle = role==='user' ? '継続審議: あなたの発言' : '継続審議: 議長の応答';
+  body.textContent = text;
+  div.appendChild(who); div.appendChild(body); box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+function renderThread(){
+  const box = $('council-thread');
+  box.innerHTML = '';
+  const s = curSessId && getSessById(curSessId);
+  if(!s){
+    box.innerHTML = '<div class="note">評議会の裁定後、または書庫から「再開」すると、ここで審議の続きを行えます。</div>';
+    return;
+  }
+  if(!s.thread || s.thread.length === 0){
+    box.innerHTML = '<div class="note">裁定への質問や次の指示を下の欄からどうぞ。全経緯を踏まえて議長が応答します。</div>';
+    return;
+  }
+  s.thread.forEach(m=>renderThreadMsg(m.role, m.content));
+}
+function resumeSession(id){
+  const s = getSessById(id);
+  if(!s) return;
+  curSessId = id;
+  $('agenda').value = s.agenda;
+  $('ruling-body').textContent = s.ruling || '—';
+  $('rebuttal-body').textContent = s.rebuttal || '—';
+  $('minerva-body').textContent = (s.temples && s.temples.minerva) ? s.temples.minerva.official : '—';
+  for(const seat of ['jupiter','juno','minerva']){
+    const tp = s.temples && s.temples[seat];
+    if(tp) renderTempleResult(tp);
+  }
+  renderThread();
+  document.querySelector('nav button[data-screen="council"]').click();
+}
+
+function sessFullText(s){
+  let t = `【議題】\n${s.agenda}\n\n【実施】${new Date(s.ts).toLocaleString('ja-JP')} / モード: ${s.mode==='max'?'深慮':'評議会'}${s.costYen!==undefined?` / コスト約¥${Math.round(s.costYen)}`:''}\n`;
+  for(const seat of ['jupiter','juno','minerva']){
+    const t2 = s.temples && s.temples[seat];
+    if(t2){
+      t += `\n━━ ${DEITY[seat]}神殿 公式見解 ━━\n${t2.official}\n`;
+      if(t2.minority) t += `(少数意見: ${t2.minority})\n`;
+      if(t2.opinions) t += t2.opinions.map(o=>`  ・${o.role}: ${o.opinion}`).join('\n') + '\n';
+    }
+  }
+  t += `\n━━ ユーノー反論書 ━━\n${s.rebuttal||'—'}\n\n━━ 最終裁定 ━━\n${s.ruling||'—'}`;
+  if(s.thread && s.thread.length){
+    t += '\n\n━━ 継続審議の経緯 ━━\n' + s.thread.map(m=>(m.role==='user'?'▶主宰: ':'◀議長: ')+m.content).join('\n\n');
+  }
+  return t;
+}
+function renderArchive(){
+  const holder = $('arch-list');
+  holder.innerHTML = '';
+  const list = loadSess().slice().reverse();
+  if(list.length === 0){
+    holder.innerHTML = '<div class="note">まだ評議会の記録がありません。評議会タブから審議を行うと、ここに自動保存されます。</div>';
+    return;
+  }
+  list.forEach(s=>{
+    const div = document.createElement('div'); div.className = 'arch-item';
+    const when = document.createElement('span'); when.className = 'when';
+    when.textContent = new Date(s.ts).toLocaleString('ja-JP').slice(0,16);
+    const title = document.createElement('span'); title.className = 'title';
+    title.textContent = (s.mode==='max'?'【深慮】':'') + (s.agenda||'').slice(0,60);
+    title.addEventListener('click', ()=> openViewer('評議会記録: '+(s.agenda||'').slice(0,30), sessFullText(s)));
+    const cost = document.createElement('span'); cost.className = 'cost';
+    cost.textContent = s.costYen !== undefined ? '¥'+Math.round(s.costYen) : '';
+    const pinLabel = document.createElement('label'); pinLabel.className = 'pin-label';
+    const pin = document.createElement('input'); pin.type = 'checkbox'; pin.checked = !!s.pinned;
+    pin.addEventListener('change', ()=>{
+      const all = loadSess();
+      const target = all.find(x=>x.id === s.id);
+      if(target){ target.pinned = pin.checked; saveSess(all); }
+    });
+    pinLabel.appendChild(pin);
+    pinLabel.appendChild(document.createTextNode('📌'));
+    const resume = document.createElement('button'); resume.className = 'btn ghost'; resume.textContent = '再開';
+    resume.addEventListener('click', ()=> resumeSession(s.id));
+    const del = document.createElement('button'); del.className = 'btn ghost'; del.textContent = '削除';
+    del.addEventListener('click', ()=>{
+      if(!confirm('この記録を削除しますか?')) return;
+      const all = loadSess().filter(x=>x.id !== s.id);
+      localStorage.setItem(SESS_KEY, JSON.stringify(all));
+      markDirty();
+      renderArchive();
+    });
+    div.appendChild(when); div.appendChild(title); div.appendChild(cost);
+    div.appendChild(pinLabel); div.appendChild(resume); div.appendChild(del);
+    holder.appendChild(div);
+  });
+}
+
+/* ========= 評議会モード ========= */
+function addAgentChip(templeEl, name){
+  const chip = document.createElement('span');
+  chip.className = 'agent';
+  chip.textContent = name;
+  templeEl.querySelector('.agents').appendChild(chip);
+  return chip;
+}
+async function templeMeeting(seat, agenda, tiers, agentCountSetting, onUpdate, useWeb){
+  const c = getConf();
+  const engine = c.seats[seat];
+  const deity = DEITY[seat];
+  const countRule = agentCountSetting === 'auto' ? '3〜5名(議題の複雑さに応じてあなたが決める)' : agentCountSetting + '名ちょうど';
+  onUpdate('招集中');
+  const rosterSys = seatSys(seat) + ` あなたは${deity}神殿の長として、議題の審議に必要な専門subagentを編成する。`;
+  const rosterPrompt = `議題:\n${agenda}\n\nこの議題を多角的に審議するための専門subagentを${countRule}編成せよ。\n次のJSONのみを出力せよ(説明文・コードブロック禁止):\n{"agents":[{"role":"役職名","focus":"担当論点を一文で"}]}`;
+  const rosterText = await callEngine(engine, tiers.chief, rosterSys, [{role:'user',content:rosterPrompt}], 800);
+  let roster;
+  try{ roster = parseJSONLoose(rosterText).agents; }catch(e){ throw new Error('subagent編成の解析に失敗'); }
+  if(!Array.isArray(roster) || roster.length === 0) throw new Error('subagent編成が空でした');
+  roster = roster.slice(0,6);
+  const templeEl = document.querySelector(`#council-pillars .pillar[data-seat="${seat}"]`);
+  const chips = roster.map(a=>{ const ch = addAgentChip(templeEl, a.role); ch.classList.add('think'); return ch; });
+  onUpdate('内部討議中');
+  const opinions = await Promise.all(roster.map(async (a, i)=>{
+    const sys = `あなたは${deity}神殿(カピトリーノ評議会)所属のsubagent「${a.role}」。担当論点: ${a.focus}。自分の専門的立場からのみ意見を述べよ。` + memoryContext() + docsContext();
+    const prompt = `議題:\n${agenda}\n\nあなたの立場からの意見を述べよ。${useWeb?'必要ならWeb検索で最新情報を確認し、検索した場合は根拠に情報源を一言添えよ。':''}形式: 【結論】一文 →【根拠】→【懸念・条件】。400字以内。`;
+    try{
+      const op = await callEngine(engine, tiers.sub, sys, [{role:'user',content:prompt}], 700, useWeb);
+      chips[i].classList.remove('think'); chips[i].classList.add('done');
+      chips[i].dataset.opinion = op;
+      return {role:a.role, opinion:op};
+    }catch(e){
+      /* 自己回復: 3秒待って同一エンジンで再挑戦 */
+      try{
+        await sleep(3000);
+        const op2 = await callEngine(engine, tiers.sub, sys, [{role:'user',content:prompt}], 700, useWeb);
+        chips[i].classList.remove('think'); chips[i].classList.add('done');
+        chips[i].dataset.opinion = op2;
+        return {role:a.role, opinion:op2};
+      }catch(e2){
+        /* 最終手段: Claudeが代打(記録に明示) */
+        if(engine !== 'claude' && getConf().keys.claude){
+          try{
+            const op3 = await callEngine('claude', 'eco', sys, [{role:'user',content:prompt}], 700, false);
+            chips[i].classList.remove('think'); chips[i].classList.add('done');
+            chips[i].textContent = a.role + '(代打C)';
+            chips[i].dataset.opinion = '※本来の担当AIが応答不能のためClaudeが代打\n' + op3;
+            return {role:a.role+'(代打Claude)', opinion:op3};
+          }catch(e3){}
+        }
+        chips[i].classList.remove('think'); chips[i].classList.add('err');
+        chips[i].dataset.opinion = '(応答失敗: '+e2.message+')';
+        return {role:a.role, opinion:'(応答失敗: '+e2.message+')', failed:true};
+      }
+    }
+  }));
+  onUpdate('見解統合中');
+  const failedCount = opinions.filter(o=>o.failed).length;
+  const joined = opinions.map(o=>`■${o.role}\n${o.opinion}`).join('\n\n');
+  const intSys = seatSys(seat) + ` あなたは${deity}神殿の長として、部下の意見を統合し神殿の公式見解をまとめる。` + (failedCount>0 ? ` 注意: ${failedCount}名のsubagentが技術障害で応答できていない。その視点の欠落を公式見解に明記せよ。` : '');
+  const intPrompt = `議題:\n${agenda}\n\n部下の意見:\n${joined}\n\n公式見解をまとめよ。重要な異論は必ず少数意見として残せ。次のJSONのみ出力:\n{"official":"公式見解(500字以内)","minority":"少数意見の要旨(なければ空文字)"}`;
+  const intText = await callEngine(engine, tiers.chief, intSys, [{role:'user',content:intPrompt}], 1200);
+  let integrated;
+  try{ integrated = parseJSONLoose(intText); }
+  catch(e){ integrated = {official:intText, minority:''}; }
+  return {seat, deity, engine, roster, opinions, official:integrated.official||'', minority:integrated.minority||''};
+}
+function renderTempleResult(t){
+  const el = document.querySelector(`#council-pillars .pillar[data-seat="${t.seat}"]`);
+  el.querySelector('.official').textContent = '【公式見解】\n' + t.official;
+  el.querySelector('.minority').textContent = t.minority ? '【少数意見】' + t.minority : '';
+  const holder = el.querySelector('.inner-holder');
+  holder.innerHTML = '';
+  const det = document.createElement('details'); det.className = 'inner';
+  const sum = document.createElement('summary'); sum.textContent = '神殿内会議の全発言を見る';
+  det.appendChild(sum);
+  t.opinions.forEach(o=>{
+    const d = document.createElement('div'); d.className = 'sub-op';
+    const b = document.createElement('b'); b.textContent = o.role;
+    d.appendChild(b); d.appendChild(document.createTextNode('\n' + o.opinion));
+    det.appendChild(d);
+  });
+  holder.appendChild(det);
+}
+$('btn-council').addEventListener('click', async ()=>{
+  const agenda = $('agenda').value.trim();
+  if(!agenda){ alert('議題を入力してください'); return; }
+  const mode = $('council-mode').value;
+  const tiers = mode === 'max' ? {sub:'std', chief:'max'} : {sub:'eco', chief:'std'};
+  const agentCount = $('agent-count').value;
+  const btn = $('btn-council');
+  btn.disabled = true; btn.textContent = '審議中…(2〜5分)';
+  const costStart = monthTotals().total;
+  document.querySelectorAll('#council-pillars .pillar').forEach(p=>{
+    p.classList.remove('testing','ok','ng');
+    p.querySelector('.status').textContent = '待機';
+    p.querySelector('.agents').innerHTML = '';
+    p.querySelector('.official').textContent = '';
+    p.querySelector('.minority').textContent = '';
+    p.querySelector('.inner-holder').innerHTML = '';
+  });
+  $('rebuttal-body').textContent = '—';
+  $('minerva-body').textContent = '—';
+  $('ruling-body').textContent = '審議中…';
+  $('session-cost').textContent = '';
+  $('phase1-label').classList.add('on');
+  const results = {};
+  await Promise.all(['jupiter','juno','minerva'].map(async seat=>{
+    const pel = document.querySelector(`#council-pillars .pillar[data-seat="${seat}"]`);
+    pel.classList.add('testing'); pel.querySelector('.status').textContent = '審議中';
+    try{
+      const r = await templeMeeting(seat, agenda, tiers, agentCount,
+        (st)=>{ pel.querySelector('.status').textContent = st; },
+        seat==='minerva' && $('web-council').checked);
+      results[seat] = r;
+      pel.classList.remove('testing'); pel.classList.add('ok');
+      pel.querySelector('.status').textContent = '見解確定';
+      renderTempleResult(r);
+    }catch(e){
+      results[seat] = null;
+      pel.classList.remove('testing'); pel.classList.add('ng');
+      pel.querySelector('.status').textContent = '障害';
+      pel.querySelector('.official').textContent = 'エラー: ' + e.message;
+    }
+  }));
+  $('phase1-label').classList.remove('on');
+  $('phase2-label').classList.add('on');
+  const c = getConf();
+  if(results.minerva){
+    $('minerva-body').textContent = results.minerva.official + (results.minerva.minority ? '\n\n【神殿内少数意見】' + results.minerva.minority : '');
+  }else{ $('minerva-body').textContent = '(ミネルヴァ神殿は障害のため欠席)'; }
+  let rebuttal = '';
+  if(results.juno && results.jupiter){
+    try{
+      $('rebuttal-body').textContent = '反論書を作成中…';
+      const sys = seatSys('juno') + ' あなたはユーノー神殿の長。ユピテル神殿の見解への反論書を作成する。';
+      const prompt = `議題:\n${agenda}\n\nユピテル神殿の公式見解:\n${results.jupiter.official}\n\n自神殿の審議結果:\n${results.juno.official}\n\nユピテル見解の弱点・リスク・見落としを列挙する反論書を作成せよ。600字以内。`;
+      rebuttal = await callEngine(c.seats.juno, tiers.chief, sys, [{role:'user',content:prompt}], 1200);
+      $('rebuttal-body').textContent = rebuttal;
+    }catch(e){ rebuttal = '(反論書の作成に失敗)'; $('rebuttal-body').textContent = rebuttal; }
+  }else{ rebuttal = '(ユーノー神殿は障害のため反論書なし)'; $('rebuttal-body').textContent = rebuttal; }
+  $('phase2-label').classList.remove('on');
+  $('phase3-label').classList.add('on');
+  try{
+    const minorities = ['jupiter','juno','minerva']
+      .filter(s=>results[s] && results[s].minority)
+      .map(s=>`【${DEITY[s]}神殿の少数意見】${results[s].minority}`).join('\n');
+    const sys = seatSys('jupiter') + ' あなたは評議会議長として最終裁定を下す。反論と少数意見を握り潰してはならない。';
+    const prompt = `議題:\n${agenda}\n\n【ユピテル神殿 公式見解】\n${results.jupiter ? results.jupiter.official : '(欠席)'}\n\n【ユーノー反論書】\n${rebuttal}\n\n【ミネルヴァ独立見解】\n${results.minerva ? results.minerva.official : '(欠席)'}\n\n${minorities ? '【各神殿の少数意見】\n'+minorities+'\n' : ''}\n全てを踏まえ最終裁定を下せ。形式:\n【裁定】\n【根拠】\n【反論への応答】\n【残存リスクと条件】\n【推奨アクション】番号付き\n【付記・少数意見】`;
+    const engine2 = results.jupiter ? c.seats.jupiter : (results.minerva ? c.seats.minerva : c.seats.juno);
+    const ruling = await callEngine(engine2, tiers.chief, sys, [{role:'user',content:prompt}], 2500);
+    $('ruling-body').textContent = ruling;
+    const spent = monthTotals().total - costStart;
+    const anyFail = ['jupiter','juno','minerva'].some(st=>results[st] && results[st].opinions && results[st].opinions.some(o=>o.failed));
+    $('session-cost').textContent = `この審議のコスト: 約¥${spent < 1 ? spent.toFixed(1) : Math.round(spent).toLocaleString()}` + (anyFail ? ' / ⚠一部subagentが応答失敗(設定タブのエラーログ参照)' : '');
+    const list = loadSess();
+    const newId = 'c'+Date.now();
+    list.push({id:newId, ts:new Date().toISOString(), agenda, mode, temples:results, rebuttal, ruling, costYen:spent, pinned:false, thread:[]});
+    saveSess(list);
+    curSessId = newId;
+    renderThread();
+  }catch(e){ $('ruling-body').textContent = '最終裁定に失敗: ' + e.message; }
+  $('phase3-label').classList.remove('on');
+  renderUsage();
+  btn.disabled = false; btn.textContent = '評議会を招集する';
+});
+
+/* ========= 快答モード(巻物対応) ========= */
+let quickTier = 'std';
+document.querySelectorAll('.tier').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.tier').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    quickTier = b.dataset.tier;
+    updateQuickLabel();
+  });
+});
+function updateQuickLabel(){
+  const c = getConf();
+  const engine = c.seats.jupiter;
+  const lbl = $('quick-model-label');
+  if(lbl) lbl.textContent = `${ENGINE_NAME[engine]} / ${c.models[engine][quickTier]}`;
+}
+function renderMsg(role, text, isErr, scrollDown){
+  const box = $('chat-box');
+  const div = document.createElement('div');
+  div.className = 'msg ' + (role==='user'?'user':'ai');
+  const who = document.createElement('div'); who.className='who';
+  who.textContent = role==='user' ? 'YOU' : 'ユピテル';
+  const body = document.createElement('div'); body.className='body readable'+(isErr?' err':'');
+  body.dataset.vtitle = role==='user' ? 'あなたの発言' : 'ユピテルの回答';
+  body.textContent = text;
+  div.appendChild(who); div.appendChild(body); box.appendChild(div);
+  if(scrollDown !== false) box.scrollTop = box.scrollHeight;
+}
+async function sendQuick(){
+  const inp = $('quick-input');
+  const text = inp.value.trim();
+  if(!text) return;
+  const c = getConf();
+  const engine = c.seats.jupiter;
+  inp.value = '';
+  renderMsg('user', text);
+  const s = loadScrolls();
+  const sc = s.list.find(x=>x.id===s.activeId);
+  sc.hist.push({role:'user', content:text});
+  sc.updated = new Date().toISOString();
+  saveScrolls(s);
+  const btn = $('btn-quick');
+  btn.disabled = true; btn.textContent = '思考中';
+  const costStart = monthTotals().total;
+  try{
+    const sys = seatSys('jupiter') + ` 現在の巻物(話題): 「${sc.name}」。主宰の質問に議長として的確に日本語で答えよ。応対ルールを厳守。`;
+    const context = sc.hist.slice(-20);
+    const reply = await callEngine(engine, quickTier, sys, context, 2000, $('web-quick').checked);
+    renderMsg('ai', reply);
+    const s2 = loadScrolls();
+    const sc2 = s2.list.find(x=>x.id===s2.activeId);
+    sc2.hist.push({role:'assistant', content:reply});
+    sc2.updated = new Date().toISOString();
+    saveScrolls(s2);
+    renderScrollBar();
+    const spent = monthTotals().total - costStart;
+    $('quick-cost').textContent = `直前の回答コスト: 約¥${spent < 1 ? spent.toFixed(2) : spent.toFixed(1)} /`;
+  }catch(e){ renderMsg('ai', e.message, true); }
+  btn.disabled = false; btn.textContent = '送信';
+}
+$('btn-quick').addEventListener('click', sendQuick);
+$('quick-input').addEventListener('keydown', e=>{
+  if(e.key==='Enter' && (e.ctrlKey||e.metaKey)){ e.preventDefault(); sendQuick(); }
+});
+$('btn-clear-chat').addEventListener('click', ()=>{
+  const s = loadScrolls();
+  const sc = s.list.find(x=>x.id===s.activeId);
+  if(!confirm('巻物「'+sc.name+'」の会話をすべて消去しますか?')) return;
+  sc.hist = [];
+  saveScrolls(s); renderChat();
+});
+
+/* この会話を記憶に反映(承認制) */
+$('btn-learn').addEventListener('click', async ()=>{
+  const sc = activeScroll();
+  const hist = sc.hist.slice(-16);
+  if(hist.length < 2){ alert('まだ会話がありません'); return; }
+  const btn = $('btn-learn');
+  btn.disabled = true; btn.textContent = '分析中…';
+  try{
+    const c = getConf();
+    const convo = hist.map(m=>(m.role==='user'?'主宰: ':'AI: ')+m.content).join('\n');
+    const sys = seatSys('jupiter') + ' あなたは主宰の記憶管理官も兼ねる。';
+    const prompt = `以下の会話から、今後のために記憶すべき「主宰に関する新事実」と「性格・嗜好の観察」を抽出せよ。患者個人情報は絶対に含めない。該当なしなら空配列。\n次のJSONのみ出力:\n{"facts":["事実1"],"persona":["観察1"]}\n\n会話:\n${convo}`;
+    const resText = await callEngine(c.seats.jupiter, 'eco', sys, [{role:'user',content:prompt}], 800);
+    const r = parseJSONLoose(resText);
+    const facts = r.facts||[], persona = r.persona||[];
+    if(facts.length===0 && persona.length===0){ alert('記憶すべき新情報は見つかりませんでした'); }
+    else{
+      const list = [...facts.map(f=>'【事実】'+f), ...persona.map(p=>'【性格】'+p)].join('\n');
+      if(confirm('次の内容を記憶に追加しますか?\n\n'+list)){
+        const m = loadMem();
+        const today = new Date().toLocaleDateString('ja-JP');
+        if(facts.length) m.sections.log = (m.sections.log||'') + `\n[${today}] ` + facts.join(' / ');
+        if(persona.length) m.sections.persona = (m.sections.persona||'') + '\n・' + persona.join('\n・');
+        saveMem(m); buildMemUI();
+        alert('記憶に追加しました。「☁クラウドへ保存」もお忘れなく。');
+      }
+    }
+  }catch(e){ alert('分析に失敗: '+e.message); }
+  btn.disabled = false; btn.textContent = '💡この会話を記憶に反映';
+});
+
+/* ========= 継続審議(PHASE 4) ========= */
+async function contChat(){
+  const s = curSessId && getSessById(curSessId);
+  if(!s){ alert('先に評議会を実行するか、書庫から「再開」してください'); return; }
+  const text = $('council-followup').value.trim();
+  if(!text){ alert('質問・指示を入力してください'); return; }
+  $('council-followup').value = '';
+  s.thread = s.thread || [];
+  s.thread.push({role:'user', content:text});
+  updateSessObj(s);
+  renderThreadMsg('user', text);
+  const btn = $('btn-cont-chat');
+  btn.disabled = true; btn.textContent = '思考中…';
+  const costStart = monthTotals().total;
+  try{
+    const c = getConf();
+    const sys = seatSys('jupiter') + ' あなたは評議会議長として、完了した審議の継続対話を行う。全経緯を踏まえ、応対ルールを厳守して応答せよ。実行可能な次の一手まで具体的に示すこと。';
+    const prompt = `これまでの審議の全記録:\n${sessionContextText(s)}\n\n主宰の新しい発言:\n${text}\n\n議長として応答せよ。`;
+    const reply = await callEngine(c.seats.jupiter, 'std', sys, [{role:'user',content:prompt}], 2500, $('web-council').checked);
+    s.thread.push({role:'assistant', content:reply});
+    updateSessObj(s);
+    renderThreadMsg('ai', reply);
+    const spent = monthTotals().total - costStart;
+    $('session-cost').textContent = `直前の応答コスト: 約¥${spent < 1 ? spent.toFixed(1) : Math.round(spent)}`;
+  }catch(e){ renderThreadMsg('ai', e.message, true); }
+  btn.disabled = false; btn.textContent = '続きを聞く(議長対話)';
+}
+$('btn-cont-chat').addEventListener('click', contChat);
+$('council-followup').addEventListener('keydown', e=>{
+  if(e.key==='Enter' && (e.ctrlKey||e.metaKey)){ e.preventDefault(); contChat(); }
+});
+
+$('btn-cont-council').addEventListener('click', ()=>{
+  const s = curSessId && getSessById(curSessId);
+  if(!s){ alert('先に評議会を実行するか、書庫から「再開」してください'); return; }
+  const text = $('council-followup').value.trim();
+  if(!text){ alert('再審議にかける追加指示・論点を入力してください'); return; }
+  /* 経緯の要点+追加指示を新しい議題として合成し、通常の評議会フローを再実行 */
+  let digest = `【最終裁定(前回)】${(s.ruling||'').slice(0,1200)}`;
+  if(s.thread && s.thread.length){
+    digest += '\n【その後の対話要点】' + s.thread.slice(-6).map(m=>(m.role==='user'?'主宰:':'議長:')+m.content.slice(0,300)).join(' / ');
+  }
+  const combined = `${s.agenda}\n\n=== これまでの審議経緯 ===\n${digest}\n\n=== 今回の追加指示(これを中心に再審議せよ) ===\n${text}`;
+  $('agenda').value = combined.length > 5000 ? combined.slice(0,5000) : combined;
+  $('council-followup').value = '';
+  if(confirm('これまでの経緯+追加指示で三神殿の再審議を開始します(数十円・数分)。よろしいですか?\n※結果は書庫に新しい記録として保存されます')){
+    $('btn-council').click();
+  }
+});
+
+$('btn-workorder').addEventListener('click', async ()=>{
+  const s = curSessId && getSessById(curSessId);
+  if(!s){ alert('先に評議会を実行するか、書庫から「再開」してください'); return; }
+  const btn = $('btn-workorder');
+  btn.disabled = true; btn.textContent = '指示書作成中…';
+  try{
+    const c = getConf();
+    const sys = seatSys('jupiter') + ' あなたは評議会の決定を実行部隊(Claude Pro/Claude Cowork等のAI)に引き継ぐ書記官を兼ねる。';
+    const prompt = `以下の審議記録を、別のAI(Claude)に貼り付ければそのまま作業を開始できる「実行指示書」に変換せよ。\n\n審議記録:\n${sessionContextText(s)}\n\n指示書の形式:\n# 実行指示書(CapiCo評議会決定 ${new Date().toLocaleDateString('ja-JP')})\n## 目的\n## 背景(実行に必要な文脈を過不足なく)\n## 成果物(何をどんな形式で作るか)\n## 作業手順(番号付き・具体的に)\n## 制約・注意事項\n## 完了条件\n※実行AIが追加で確認すべき事項があれば末尾に「要確認事項」として列挙`;
+    const order = await callEngine(c.seats.jupiter, 'std', sys, [{role:'user',content:prompt}], 3000);
+    s.thread = s.thread || [];
+    s.thread.push({role:'assistant', content:'📋【実行指示書】\n'+order});
+    updateSessObj(s);
+    renderThread();
+    try{ await navigator.clipboard.writeText(order); }catch(e){}
+    openViewer('📋 実行指示書(クリップボードにコピー済み)', order);
+  }catch(e){ alert('指示書の作成に失敗: '+e.message); }
+  btn.disabled = false; btn.textContent = '📋 実行指示書を作成';
+});
+
+/* ========= エラーログUIと自己診断 ========= */
+function renderErrLog(){
+  const holder = $('errlog-holder');
+  if(!holder) return;
+  const list = loadErr().slice().reverse().slice(0, 30);
+  holder.innerHTML = '';
+  if(list.length === 0){ holder.innerHTML = '<div class="note">記録されたエラーはありません。三柱は健全に稼働しています。</div>'; return; }
+  list.forEach(e=>{
+    const chip = document.createElement('div'); chip.className = 'doc-chip';
+    const when = document.createElement('span'); when.className = 'dmeta';
+    when.textContent = new Date(e.ts).toLocaleString('ja-JP').slice(5,16);
+    const name = document.createElement('span'); name.className = 'dname';
+    name.textContent = `${ENGINE_NAME[e.engine]||e.engine} / ${e.model||''}`;
+    name.addEventListener('click', ()=> openViewer('エラー詳細: '+(ENGINE_NAME[e.engine]||e.engine), `発生: ${new Date(e.ts).toLocaleString('ja-JP')}\nモデル: ${e.model} (${e.tier})\n\n${e.msg}`));
+    const msg = document.createElement('span'); msg.className = 'dmeta';
+    msg.textContent = (e.msg||'').slice(0, 40);
+    chip.appendChild(when); chip.appendChild(name); chip.appendChild(msg);
+    holder.appendChild(chip);
+  });
+}
+$('btn-err-clear').addEventListener('click', ()=>{
+  if(!confirm('エラーログを消去しますか?')) return;
+  localStorage.removeItem(ERR_KEY); renderErrLog();
+});
+$('btn-err-analyze').addEventListener('click', async ()=>{
+  const list = loadErr();
+  if(list.length === 0){ alert('分析対象のエラーがありません'); return; }
+  const btn = $('btn-err-analyze');
+  btn.disabled = true; btn.textContent = '分析中…';
+  try{
+    const c = getConf();
+    const digest = list.slice(-40).map(e=>`[${e.ts.slice(5,16)}] ${e.engine}/${e.model}(${e.tier}): ${e.msg}`).join('\n');
+    const confDigest = JSON.stringify({seats:c.seats, models:c.models});
+    const sys = seatSys('jupiter', false) + ' あなたはCapiCoの保守技師も兼ねる。API呼び出しの障害ログを分析し、非エンジニアの主宰が実行できる具体的な改善策を提示する。';
+    const prompt = `CapiCoの現在の設定:\n${confDigest}\n\n障害ログ(直近):\n${digest}\n\n次の形式で日本語で報告せよ:\n【診断】主な障害パターンと推定原因(頻度順)\n【即効の対処】設定タブで今すぐ変更すべき項目(モデル名の変更等、具体値で)\n【様子見でよいもの】\n【開発者(Claude)に依頼すべき改修】あれば`;
+    const report = await callEngine(c.seats.jupiter, 'std', sys, [{role:'user',content:prompt}], 2000);
+    openViewer('🩺 自己診断レポート', report);
+  }catch(e){ alert('分析に失敗: '+e.message); }
+  btn.disabled = false; btn.textContent = '🩺 AIに原因分析と改善策を出させる';
+});
+
+/* ========= 朝礼 ========= */
+async function morningBrief(){
+  const btn = $('btn-brief');
+  btn.disabled = true; btn.textContent = '朝礼準備中…';
+  const costStart = monthTotals().total;
+  try{
+    const c = getConf();
+    const scrolls = loadScrolls();
+    const scrollDigest = scrolls.list.slice().sort((a,b)=>(b.updated||'').localeCompare(a.updated||'')).slice(0,5)
+      .map(sc=>{
+        const lastU = sc.hist.filter(m=>m.role==='user').slice(-1)[0];
+        return `・巻物「${sc.name}」最終発言: ${lastU ? lastU.content.slice(0,120) : '(なし)'}`;
+      }).join('\n');
+    const sessDigest = loadSess().slice(-3).map(x=>`・[${x.ts.slice(5,10)}] 議題: ${x.agenda.slice(0,80)} → 裁定要旨: ${(x.ruling||'').slice(0,200)}`).join('\n');
+    const sys = seatSys('jupiter') + ' あなたは毎朝の朝礼を主宰する議長である。応対ルール(結論先出し・先回り提示・気の利く同僚)を最大限体現せよ。';
+    const prompt = `本日は${new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric',weekday:'long'})}。\n\n最近の巻物(会話)の状況:\n${scrollDigest||'(なし)'}\n\n最近の評議会:\n${sessDigest||'(なし)'}\n\n記憶データも踏まえ、朝礼として次を簡潔に(全体で600字以内):\n【今日の要点】曜日と診療体制を踏まえた本日の位置づけ\n【保留中のタスク】記憶・巻物・評議会から拾った未完了事項(期限があれば明記)\n【先回り提案】主宰がまだ気づいていなさそうな次の一手を1〜2個\n【今日の確認】1問だけ主宰への質問`;
+    const reply = await callEngine(c.seats.jupiter, 'std', sys, [{role:'user',content:prompt}], 1500, $('web-quick').checked);
+    renderMsg('ai', '🌅【朝礼】\n' + reply);
+    const s2 = loadScrolls();
+    const sc2 = s2.list.find(x=>x.id===s2.activeId);
+    sc2.hist.push({role:'assistant', content:'🌅【朝礼】\n'+reply});
+    sc2.updated = new Date().toISOString();
+    saveScrolls(s2);
+    const spent = monthTotals().total - costStart;
+    $('quick-cost').textContent = `朝礼コスト: 約¥${spent < 1 ? spent.toFixed(1) : Math.round(spent)} /`;
+  }catch(e){ renderMsg('ai', e.message, true); }
+  btn.disabled = false; btn.textContent = '🌅 朝礼';
+}
+$('btn-brief').addEventListener('click', morningBrief);
+
+/* ========= 横断全文検索 ========= */
+function doGlobalSearch(){
+  const q = $('global-search').value.trim();
+  const holder = $('search-results');
+  holder.innerHTML = '';
+  if(!q){ holder.innerHTML = '<div class="note">キーワードを入力してください</div>'; return; }
+  const ql = q.toLowerCase();
+  const hits = [];
+  /* 巻物から検索 */
+  loadScrolls().list.forEach(sc=>{
+    sc.hist.forEach((m,i)=>{
+      if((m.content||'').toLowerCase().includes(ql)){
+        hits.push({kind:'巻物', src:sc.name, ts:sc.updated,
+          snippet:m.content.slice(Math.max(0, m.content.toLowerCase().indexOf(ql)-30), m.content.toLowerCase().indexOf(ql)+70),
+          full:(m.role==='user'?'▶主宰:\n':'◀議長:\n')+m.content,
+          title:`巻物「${sc.name}」の発言`});
+      }
+    });
+  });
+  /* 書庫から検索 */
+  loadSess().forEach(sx=>{
+    const t = sessFullText(sx);
+    if(t.toLowerCase().includes(ql)){
+      const idx = t.toLowerCase().indexOf(ql);
+      hits.push({kind:'評議会', src:sx.agenda.slice(0,30), ts:sx.ts,
+        snippet:t.slice(Math.max(0, idx-30), idx+70),
+        full:t, title:'評議会記録: '+sx.agenda.slice(0,30)});
+    }
+  });
+  if(hits.length === 0){ holder.innerHTML = '<div class="note">「'+q+'」は見つかりませんでした</div>'; return; }
+  hits.sort((a,b)=>(b.ts||'').localeCompare(a.ts||''));
+  hits.slice(0, 30).forEach(h=>{
+    const chip = document.createElement('div'); chip.className = 'doc-chip';
+    const kind = document.createElement('span'); kind.className = 'dmeta';
+    kind.textContent = (h.kind==='巻物'?'📜':'⚖️') + (h.ts ? new Date(h.ts).toLocaleDateString('ja-JP').slice(5) : '');
+    const name = document.createElement('span'); name.className = 'dname';
+    name.textContent = `[${h.src}] …${h.snippet.replace(/\n/g,' ')}…`;
+    name.addEventListener('click', ()=> openViewer(h.title, h.full));
+    chip.appendChild(kind); chip.appendChild(name);
+    holder.appendChild(chip);
+  });
+  if(hits.length > 30){
+    const note = document.createElement('div'); note.className = 'note';
+    note.textContent = `他${hits.length-30}件。キーワードを絞ってください`;
+    holder.appendChild(note);
+  }
+}
+$('btn-global-search').addEventListener('click', doGlobalSearch);
+$('global-search').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); doGlobalSearch(); } });
+
+/* ========= 快答→評議会へ昇格 ========= */
+$('btn-escalate').addEventListener('click', async ()=>{
+  const sc = activeScroll();
+  if(!sc || sc.hist.length < 2){ alert('まだ会話がありません'); return; }
+  const btn = $('btn-escalate');
+  btn.disabled = true; btn.textContent = '議題を起草中…';
+  try{
+    const c = getConf();
+    const convo = sc.hist.slice(-14).map(m=>(m.role==='user'?'主宰: ':'議長: ')+m.content).join('\n');
+    const sys = seatSys('jupiter', false) + ' あなたは評議会の書記官を兼ねる。';
+    const prompt = `以下の会話を、三神殿評議会に諮る「議題文」に変換せよ。含めるべき要素: 判断したい問い(明確に)/前提となる事実・数字/主宰の懸念。400字以内、議題文のみ出力。\n\n会話:\n${convo}`;
+    const agenda = await callEngine(c.seats.jupiter, 'eco', sys, [{role:'user',content:prompt}], 700);
+    $('agenda').value = agenda.trim();
+    document.querySelector('nav button[data-screen="council"]').click();
+    alert('会話を議題文に変換して評議会タブにセットしました。内容を確認・修正のうえ「評議会を招集する」を押してください。');
+  }catch(e){ alert('議題の起草に失敗: '+e.message); }
+  btn.disabled = false; btn.textContent = '⚖️ この相談を評議会へ昇格';
+});
+
+/* ========= タイムマシン(Gist版履歴からの復元) ========= */
+$('btn-restore').addEventListener('click', async ()=>{
+  const s = syncConf();
+  if(!s.ghToken || !s.gistId || !s.pass){ alert('同期設定(3点セット)が必要です'); return; }
+  const btn = $('btn-restore');
+  btn.disabled = true; btn.textContent = '履歴取得中…';
+  try{
+    const res = await fetch('https://api.github.com/gists/'+s.gistId, {
+      headers:{'Authorization':'token '+s.ghToken, 'Accept':'application/vnd.github+json'}
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error('GitHub応答 '+res.status);
+    const hist = (data.history||[]).slice(0, 15);
+    if(hist.length === 0) throw new Error('版の履歴がありません');
+    const menu = hist.map((h,i)=>`${i+1}: ${new Date(h.committed_at).toLocaleString('ja-JP')}`).join('\n');
+    const pick = prompt('復元する版の番号を入力してください(新しい順):\n\n'+menu+'\n\n※復元すると現在の内容はその版で上書きされます');
+    if(!pick) { btn.disabled=false; btn.textContent='⏪ 過去の版から復元'; return; }
+    const idx = parseInt(pick,10)-1;
+    if(isNaN(idx) || idx<0 || idx>=hist.length) throw new Error('番号が不正です');
+    btn.textContent = '復元中…';
+    const vres = await fetch('https://api.github.com/gists/'+s.gistId+'/'+hist[idx].version, {
+      headers:{'Authorization':'token '+s.ghToken, 'Accept':'application/vnd.github+json'}
+    });
+    const vdata = await vres.json();
+    if(!vres.ok) throw new Error('版の取得に失敗 '+vres.status);
+    const file = vdata.files && vdata.files['capico_memory.enc'];
+    if(!file) throw new Error('その版に記憶ファイルがありません');
+    const plain = await decryptText(s.pass, file.content);
+    const obj = JSON.parse(plain);
+    if(!confirm('この版('+new Date(hist[idx].committed_at).toLocaleString('ja-JP')+')を復元します。よろしいですか?')) throw new Error('キャンセルしました');
+    if(obj.fmt === 2){
+      localStorage.setItem(MEM_KEY, JSON.stringify(obj.mem||{sections:{}}));
+      if(obj.scrolls) localStorage.setItem(SCROLL_KEY, JSON.stringify(obj.scrolls));
+      if(obj.sess) localStorage.setItem(SESS_KEY, JSON.stringify(obj.sess));
+    }else{
+      localStorage.setItem(MEM_KEY, JSON.stringify(obj));
+    }
+    buildMemUI(); refreshMemBadge(); renderScrollBar(); renderChat(); renderArchive();
+    markDirty(); /* 復元内容を最新版としてクラウドへ再同期 */
+    $('sync-status').textContent = '⏪ 復元完了。この内容が最新版として全端末に同期されます。';
+  }catch(e){ alert('復元: '+e.message); }
+  btn.disabled = false; btn.textContent = '⏪ 過去の版から復元';
+});
+
+/* ========= 起動時 ========= */
+['web-quick','web-council'].forEach(id=>{
+  const el = $(id);
+  el.checked = localStorage.getItem('capico_'+id) === '1';
+  el.addEventListener('change', ()=> localStorage.setItem('capico_'+id, el.checked ? '1' : '0'));
+});
+fillForm();
+renderThread();
+renderErrLog();
+$('sync-badge').addEventListener('click', ()=>{
+  if(syncReady()){ syncDirty = true; autoPush(); }
+  else document.querySelector('nav button[data-screen="memory"]').click();
+});
+(async ()=>{
+  if(syncReady()){
+    setSyncBadge('dirty','☁ 読込中…');
+    $('sync-status').textContent = '起動時自動読込中…';
+    await memPull(true);
+  }else{
+    setSyncBadge('off','同期: 未設定');
+  }
+})();
+</script>
+</body>
+</html>
