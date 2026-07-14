@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Capitoline Council — CapiCo v1.9</title>
+<title>Capitoline Council — CapiCo v2.0</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   /* ===== テーマ1: アイボリー(既定・老眼配慮) ===== */
@@ -356,7 +357,7 @@
 <header>
   <div class="brand">
     <span class="en">CAPITOLINE COUNCIL</span>
-    <span class="jp">カピトリーノ評議会 — CapiCo v1.9 / Private AI Agents Company</span>
+    <span class="jp">カピトリーノ評議会 — CapiCo v2.0 / Private AI Agents Company</span>
   </div>
   <div class="chair-badge" id="chair-badge">現議長: <b>—</b></div>
   <div class="mem-badge" id="mem-badge">記憶: 未読込</div>
@@ -402,10 +403,10 @@
     <details class="memsec" style="margin-bottom:12px">
       <summary>📎 書類かばん — 資料を読み込ませる(Word/Excel/PDF/MD等)</summary>
       <div class="inner-pad">
-        <div class="dropzone" data-dz>ここにファイルを<b>ドラッグ&ドロップ</b><br>またはクリックして選択(.docx / .xlsx / .pdf / .md / .txt / .csv)</div>
+        <div class="dropzone" data-dz>ここにファイルを<b>ドラッグ&ドロップ</b><br>またはクリックして選択<br><span style="font-size:12px">Word / Excel / PowerPoint / PDF / 画像(JPEG・PNG・TIFF等) / MD・TXT・CSV</span></div>
         <div class="doc-list" data-doclist></div>
         <div class="doc-total" data-doctotal></div>
-        <div class="note">✔を付けた資料の内容を、快答・評議会・継続審議のすべてのAIが参照します。資料はこの画面を開いている間だけ有効です(クラウドには保存されません)。⚠患者個人情報を含むファイルは読み込ませないでください。</div>
+        <div class="note">✔を付けた資料の内容を、快答・評議会・継続審議のすべてのAIが参照します。<b>画像はユピテル(Claude)とミネルヴァ(Gemini)が直接見て判断します</b>(ChatGPTは文字のみ)。画像は1回の送信につき最大4枚まで、長辺1200pxに自動縮小されます。資料はこの画面を開いている間だけ有効です(クラウドには保存されません)。⚠患者個人情報を含むファイルは読み込ませないでください。</div>
       </div>
     </details>
 
@@ -439,7 +440,7 @@
       <details class="memsec" style="margin-top:12px">
         <summary>📎 書類かばん — 審議資料を読み込ませる</summary>
         <div class="inner-pad">
-          <div class="dropzone" data-dz>ここにファイルを<b>ドラッグ&ドロップ</b><br>またはクリックして選択(.docx / .xlsx / .pdf / .md / .txt / .csv)</div>
+          <div class="dropzone" data-dz>ここにファイルを<b>ドラッグ&ドロップ</b><br>またはクリックして選択<br><span style="font-size:12px">Word / Excel / PowerPoint / PDF / 画像(JPEG・PNG・TIFF等) / MD・TXT・CSV</span></div>
           <div class="doc-list" data-doclist></div>
           <div class="doc-total" data-doctotal></div>
         </div>
@@ -731,8 +732,8 @@
 
 </main>
 
-<input type="file" id="doc-file-input" multiple hidden accept=".docx,.doc,.xlsx,.xls,.xlsm,.pdf,.md,.txt,.csv,.json">
-<footer>CAPITOLINE COUNCIL v1.9 — FULL-PAGE TEMPLE BACKGROUNDS</footer>
+<input type="file" id="doc-file-input" multiple hidden accept=".docx,.doc,.xlsx,.xls,.xlsm,.pptx,.ppt,.pdf,.md,.txt,.csv,.json,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tif,.tiff,.heic,.heif">
+<footer>CAPITOLINE COUNCIL v2.0 — POWERPOINT &amp; IMAGE READING (VISION)</footer>
 
 <div id="viewer" role="dialog" aria-modal="true">
   <div class="viewer-card">
@@ -797,8 +798,8 @@ if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.clou
 let DOCS = [];
 const DOC_CAP_FILE = 60000, DOC_CAP_TOTAL = 45000;
 function docsContext(){
-  const on = DOCS.filter(d=>d.on);
-  if(on.length === 0) return '';
+  const on = DOCS.filter(d=>d.on && d.kind !== 'image');
+  const imgs = DOCS.filter(d=>d.on && d.kind === 'image');
   let parts = [], used = 0;
   for(const d of on){
     let t = d.text;
@@ -807,7 +808,24 @@ function docsContext(){
     parts.push(`--- 資料「${d.name}」ここから ---\n${t}\n--- 資料「${d.name}」ここまで ---`);
     if(used >= DOC_CAP_TOTAL) break;
   }
-  return `\n\n=== 主宰が添付した資料(回答の参考にせよ) ===\n${parts.join('\n\n')}\n=== 資料ここまで ===`;
+  let out = '';
+  if(parts.length) out += `\n\n=== 主宰が添付した資料(回答の参考にせよ) ===\n${parts.join('\n\n')}\n=== 資料ここまで ===`;
+  if(imgs.length) out += `\n\n(このメッセージには画像${imgs.length}枚が添付されています。画像の内容も踏まえて回答してください: ${imgs.map(d=>d.name).join(', ')})`;
+  return out;
+}
+// ONになっている画像のdataURL配列(vision対応AIに渡す)
+function activeImages(){
+  return DOCS.filter(d=>d.on && d.kind === 'image' && d.dataUrl).map(d=>d.dataUrl);
+}
+// 画像を大きく表示
+function openImageViewer(title, dataUrl){
+  $('vtitle').textContent = '画像: ' + title;
+  $('vbody').innerHTML = '';
+  const img = document.createElement('img');
+  img.src = dataUrl;
+  img.style.cssText = 'max-width:100%;height:auto;border-radius:6px;display:block;margin:0 auto';
+  $('vbody').appendChild(img);
+  $('viewer').classList.add('open');
 }
 function renderDocs(){
   document.querySelectorAll('[data-doclist]').forEach(list=>{
@@ -817,9 +835,18 @@ function renderDocs(){
       const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = d.on;
       cb.addEventListener('change', ()=>{ d.on = cb.checked; renderDocs(); });
       const name = document.createElement('span'); name.className = 'dname'; name.textContent = d.name;
-      name.addEventListener('click', ()=> openViewer('資料: '+d.name, d.text));
+      if(d.kind === 'image' && d.dataUrl){
+        const th = document.createElement('img');
+        th.src = d.dataUrl; th.alt = d.name;
+        th.style.cssText = 'width:34px;height:34px;object-fit:cover;border-radius:4px;border:1px solid var(--edge);cursor:zoom-in';
+        th.addEventListener('click', ()=> openImageViewer(d.name, d.dataUrl));
+        chip.appendChild(th);
+        name.addEventListener('click', ()=> openImageViewer(d.name, d.dataUrl));
+      }else{
+        name.addEventListener('click', ()=> openViewer('資料: '+d.name, d.text));
+      }
       const meta = document.createElement('span'); meta.className = 'dmeta';
-      meta.textContent = Math.max(1, Math.round(d.text.length/1000)) + '千字';
+      meta.textContent = d.kind === 'image' ? '🖼 画像' : Math.max(1, Math.round(d.text.length/1000)) + '千字';
       const del = document.createElement('button'); del.className = 'ddel'; del.textContent = '✕';
       del.addEventListener('click', ()=>{ DOCS = DOCS.filter(x=>x.id !== d.id); renderDocs(); });
       chip.appendChild(cb); chip.appendChild(name); chip.appendChild(meta); chip.appendChild(del);
@@ -836,7 +863,14 @@ function renderDocs(){
 async function extractFile(f){
   const ext = (f.name.split('.').pop()||'').toLowerCase();
   const cap = t => t.length > DOC_CAP_FILE ? t.slice(0, DOC_CAP_FILE) + '\n(長文のため以下省略)' : t;
-  if(['md','txt','csv','json'].includes(ext)) return cap(await f.text());
+  // ===== 画像ファイル =====
+  const imgExts = ['jpg','jpeg','png','gif','webp','bmp','tif','tiff','heic','heif'];
+  if(imgExts.includes(ext)){
+    const dataUrl = await imageToDataUrl(f, ext);
+    return {kind:'image', dataUrl, text:`【画像: ${f.name}】(AIが直接閲覧します)`};
+  }
+  // ===== テキスト系 =====
+  if(['md','txt','csv','json'].includes(ext)) return {kind:'text', text:cap(await f.text())};
   if(ext === 'pdf'){
     if(!window.pdfjsLib) throw new Error('PDF解析ライブラリ未読込(インターネット接続を確認)');
     const pdf = await pdfjsLib.getDocument({data: await f.arrayBuffer()}).promise;
@@ -847,29 +881,85 @@ async function extractFile(f){
       t += tc.items.map(i=>i.str).join(' ') + '\n';
       if(t.length > DOC_CAP_FILE) break;
     }
-    if(!t.trim()) throw new Error('文字を抽出できません(画像スキャンPDFの可能性)');
-    return cap(t);
+    if(!t.trim()) throw new Error('文字を抽出できません(画像スキャンPDFの可能性。画像として読み込ませてください)');
+    return {kind:'text', text:cap(t)};
   }
   if(ext === 'docx'){
     if(!window.mammoth) throw new Error('Word解析ライブラリ未読込(インターネット接続を確認)');
     const r = await mammoth.extractRawText({arrayBuffer: await f.arrayBuffer()});
-    return cap(r.value);
+    return {kind:'text', text:cap(r.value)};
   }
   if(['xlsx','xls','xlsm'].includes(ext)){
     if(!window.XLSX) throw new Error('Excel解析ライブラリ未読込(インターネット接続を確認)');
     const wb = XLSX.read(await f.arrayBuffer());
     let t = '';
     wb.SheetNames.forEach(n=>{ t += `【シート: ${n}】\n` + XLSX.utils.sheet_to_csv(wb.Sheets[n]) + '\n'; });
-    return cap(t);
+    return {kind:'text', text:cap(t)};
   }
-  if(ext === 'doc') throw new Error('旧形式(.doc)は未対応。Wordで.docx形式に保存し直してください');
-  return cap(await f.text());
+  if(ext === 'pptx'){
+    if(!window.JSZip) throw new Error('PowerPoint解析ライブラリ未読込(インターネット接続を確認)');
+    const zip = await JSZip.loadAsync(await f.arrayBuffer());
+    // スライドXMLを番号順に取得
+    const slideNames = Object.keys(zip.files)
+      .filter(n=>/^ppt\/slides\/slide\d+\.xml$/.test(n))
+      .sort((a,b)=>{
+        const na = parseInt(a.match(/slide(\d+)/)[1],10);
+        const nb = parseInt(b.match(/slide(\d+)/)[1],10);
+        return na-nb;
+      });
+    let t = '';
+    for(let i=0;i<slideNames.length;i++){
+      const xml = await zip.files[slideNames[i]].async('string');
+      // <a:t>...</a:t> のテキストを抽出
+      const texts = [...xml.matchAll(/<a:t>([^<]*)<\/a:t>/g)].map(m=>m[1]);
+      t += `【スライド${i+1}】\n` + texts.join(' ') + '\n\n';
+      if(t.length > DOC_CAP_FILE) break;
+    }
+    if(!t.trim()) throw new Error('スライドから文字を抽出できませんでした');
+    return {kind:'text', text:cap(t)};
+  }
+  if(ext === 'doc') throw new Error('旧Word形式(.doc)は未対応。Wordで.docx形式に保存し直してください');
+  if(ext === 'ppt') throw new Error('旧PowerPoint形式(.ppt)は未対応。.pptx形式に保存し直してください');
+  return {kind:'text', text:cap(await f.text())};
+}
+// 画像をdataURLに変換(TIFF等はcanvasでPNG化を試みる)
+async function imageToDataUrl(f, ext){
+  const raw = await new Promise((res,rej)=>{
+    const r = new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f);
+  });
+  // ブラウザが直接表示できる形式はそのまま(大きすぎる場合は縮小)
+  const browserOk = ['jpg','jpeg','png','gif','webp','bmp'].includes(ext);
+  if(browserOk){
+    return await shrinkImage(raw);
+  }
+  // TIFF/HEIC等: <img>で読めない可能性が高いので、canvas変換を試み、失敗したら警告
+  try{
+    return await shrinkImage(raw);
+  }catch(e){
+    throw new Error('この画像形式('+ext+')はブラウザで変換できません。PNG/JPEGに変換してから読み込ませてください');
+  }
+}
+// 画像を長辺1200pxに縮小しJPEG化(API送信量とコストを抑制)
+function shrinkImage(dataUrl){
+  return new Promise((resolve,reject)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const max = 1200;
+      let {width:w, height:h} = img;
+      if(Math.max(w,h) > max){ const s = max/Math.max(w,h); w=Math.round(w*s); h=Math.round(h*s); }
+      const c = document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      resolve(c.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = ()=>reject(new Error('画像を読み込めません'));
+    img.src = dataUrl;
+  });
 }
 async function handleFiles(files){
   for(const f of files){
     try{
-      const text = await extractFile(f);
-      DOCS.push({id:'d'+Date.now()+Math.random(), name:f.name, text, on:true});
+      const r = await extractFile(f);
+      DOCS.push({id:'d'+Date.now()+Math.random(), name:f.name, text:r.text, kind:r.kind||'text', dataUrl:r.dataUrl||null, on:true});
     }catch(e){ alert(f.name + ' の読込に失敗: ' + e.message); }
   }
   renderDocs();
@@ -1465,14 +1555,54 @@ async function callEngine(engine, tier, systemText, messages, maxTokens, web){
     throw e;
   }
 }
+/* ===== 画像添付(vision) ===== */
+const IMG_MAX_PER_CALL = 4;
+function parseDataUrl(u){
+  const m = (u||'').match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+  return m ? {mime:m[1], b64:m[2]} : null;
+}
+/* Claude形式: 最後のuserメッセージに画像ブロックを添付 */
+function withImagesClaude(messages, imgs){
+  if(!imgs.length) return messages;
+  const out = messages.map(m=>({...m}));
+  for(let i=out.length-1; i>=0; i--){
+    if(out[i].role === 'user'){
+      const blocks = [];
+      imgs.slice(0, IMG_MAX_PER_CALL).forEach(u=>{
+        const p = parseDataUrl(u);
+        if(p) blocks.push({type:'image', source:{type:'base64', media_type:p.mime, data:p.b64}});
+      });
+      const txt = typeof out[i].content === 'string' ? out[i].content : '';
+      out[i] = {role:'user', content:[...blocks, {type:'text', text:txt}]};
+      break;
+    }
+  }
+  return out;
+}
+/* Gemini形式: 最後のuserパートにinline_dataを添付 */
+function withImagesGemini(contents, imgs){
+  if(!imgs.length) return contents;
+  const out = contents.map(c=>({role:c.role, parts:[...c.parts]}));
+  for(let i=out.length-1; i>=0; i--){
+    if(out[i].role === 'user'){
+      imgs.slice(0, IMG_MAX_PER_CALL).forEach(u=>{
+        const p = parseDataUrl(u);
+        if(p) out[i].parts.push({inline_data:{mime_type:p.mime, data:p.b64}});
+      });
+      break;
+    }
+  }
+  return out;
+}
 async function callEngineRaw(engine, tier, systemText, messages, maxTokens, web){
   const c = getConf();
   const model = c.models[engine][tier];
   const key = c.keys[engine];
   if(!key) throw new Error('APIキー未設定('+ENGINE_NAME[engine]+')');
+  const imgs = (typeof activeImages === 'function') ? activeImages() : [];
   if(engine === 'claude'){
     return withRetry(async ()=>{
-      const body = {model, max_tokens:maxTokens||1500, system:systemText, messages};
+      const body = {model, max_tokens:maxTokens||1500, system:systemText, messages:withImagesClaude(messages, imgs)};
       if(web) body.tools = [{type:'web_search_20250305', name:'web_search', max_uses:3}];
       const res = await fetch('https://api.anthropic.com/v1/messages',{
         method:'POST',
@@ -1506,7 +1636,8 @@ async function callEngineRaw(engine, tier, systemText, messages, maxTokens, web)
       return await withRetry(async ()=>{
         const url = 'https://generativelanguage.googleapis.com/v1beta/models/'
           + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(key);
-        const contents = messages.map(m=>({role: m.role==='assistant'?'model':'user', parts:[{text:m.content}]}));
+        let contents = messages.map(m=>({role: m.role==='assistant'?'model':'user', parts:[{text:m.content}]}));
+        contents = withImagesGemini(contents, imgs);
         const gbody = {systemInstruction:{parts:[{text:systemText}]}, contents};
         if(web) gbody.tools = [{google_search:{}}];
         const res = await fetch(url,{
