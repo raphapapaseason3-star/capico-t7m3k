@@ -3,13 +3,42 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Capitoline Council — CapiCo v2.4</title>
+<title>Capitoline Council — CapiCo v2.5</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<!-- PowerPoint生成(JSZipを内包) -->
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<!-- Word生成 -->
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+<!-- グラフ描画 -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+<!-- pptx読込用(pptxgenのJSZipを上書きしないよう最後に) -->
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script>
+/* CDNが読めなかった場合は別ミラーから自動再取得 */
+(function(){
+  const FALLBACKS = [
+    {test:()=>window.PptxGenJS, url:'https://unpkg.com/pptxgenjs@3.12.0/dist/pptxgen.bundle.js', name:'PowerPoint'},
+    {test:()=>window.docx,      url:'https://unpkg.com/docx@8.5.0/build/index.umd.js',           name:'Word'},
+    {test:()=>window.Chart,     url:'https://unpkg.com/chart.js@4.4.0/dist/chart.umd.js',        name:'グラフ'},
+    {test:()=>window.JSZip,     url:'https://unpkg.com/jszip@3.10.1/dist/jszip.min.js',          name:'ZIP'},
+    {test:()=>window.mammoth,   url:'https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js',    name:'Word読込'},
+    {test:()=>window.XLSX,      url:'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js',       name:'Excel'},
+    {test:()=>window.pdfjsLib,  url:'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js',    name:'PDF'}
+  ];
+  window.LIB_STATUS = {};
+  window.addEventListener('load', ()=>{
+    FALLBACKS.forEach(f=>{
+      if(f.test()){ window.LIB_STATUS[f.name] = 'ok'; return; }
+      const sc = document.createElement('script');
+      sc.src = f.url;
+      sc.onload = ()=>{ window.LIB_STATUS[f.name] = f.test() ? 'ok(予備)' : '失敗'; };
+      sc.onerror = ()=>{ window.LIB_STATUS[f.name] = '失敗'; };
+      document.head.appendChild(sc);
+    });
+  });
+})();
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   /* ===== テーマ1: アイボリー(既定・老眼配慮) ===== */
@@ -414,7 +443,7 @@
 <header>
   <div class="brand">
     <span class="en">CAPITOLINE COUNCIL</span>
-    <span class="jp">カピトリーノ評議会 — CapiCo v2.4 / Private AI Agents Company</span>
+    <span class="jp">カピトリーノ評議会 — CapiCo v2.5 / Private AI Agents Company</span>
   </div>
   <div class="chair-badge" id="chair-badge">現議長: <b>—</b></div>
   <div class="mem-badge" id="mem-badge">記憶: 未読込</div>
@@ -744,6 +773,7 @@
 
     <h2>SELF-DIAGNOSIS<span class="jp">エラーログ・自己診断</span></h2>
     <div class="card">
+      <div id="lib-status" class="note" style="margin-bottom:8px"></div>
       <div id="errlog-holder" class="doc-list"></div>
       <div class="row">
         <div><button class="btn gold" id="btn-err-analyze" style="margin-top:14px">🩺 AIに原因分析と改善策を出させる</button></div>
@@ -823,7 +853,7 @@
 </main>
 
 <input type="file" id="doc-file-input" multiple hidden accept=".docx,.doc,.xlsx,.xls,.xlsm,.pptx,.ppt,.pdf,.md,.txt,.csv,.json,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tif,.tiff,.heic,.heif">
-<footer>CAPITOLINE COUNCIL v2.4 — COMPACT UI / VOICE INPUT / CHECKLIST EXPORT</footer>
+<footer>CAPITOLINE COUNCIL v2.5 — LIBRARY FIX / SELF-CHECK</footer>
 
 <div id="print-area"></div>
 
@@ -878,6 +908,7 @@ document.querySelectorAll('nav button').forEach(b=>{
     $('screen-'+b.dataset.screen).classList.add('active');
     document.body.setAttribute('data-tab', b.dataset.screen);
     if(b.dataset.screen === 'archive') renderArchive();
+    if(b.dataset.screen === 'settings') renderLibStatus();
   });
 });
 document.querySelectorAll('[data-toggle]').forEach(b=>{
@@ -913,7 +944,7 @@ document.addEventListener('click', e=>{
 });
 
 /* ========= 書類かばん ========= */
-if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 let DOCS = [];
 const DOC_CAP_FILE = 60000, DOC_CAP_TOTAL = 45000;
 function docsContext(){
@@ -2779,7 +2810,7 @@ function exportPDF(doc){
 
 /* --- Word(.docx) --- */
 async function exportDOCX(doc){
-  if(!window.docx) throw new Error('Word生成ライブラリ未読込(インターネット接続を確認)');
+  if(!window.docx) throw new Error('Word生成ライブラリが読み込めていません。ページを再読み込み(Ctrl+Shift+R)してください。改善しない場合は広告ブロッカーがCDNを遮断している可能性があります(設定タブの自己診断で状態を確認できます)');
   const {Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle} = window.docx;
   const children = [];
   children.push(new Paragraph({
@@ -2813,7 +2844,7 @@ async function exportDOCX(doc){
 
 /* --- PowerPoint(.pptx) --- */
 async function exportPPTX(doc){
-  if(!window.PptxGenJS) throw new Error('PowerPoint生成ライブラリ未読込(インターネット接続を確認)');
+  if(!window.PptxGenJS) throw new Error('PowerPoint生成ライブラリが読み込めていません。ページを再読み込み(Ctrl+Shift+R)してください。改善しない場合は広告ブロッカーがCDNを遮断している可能性があります(設定タブの自己診断で状態を確認できます)');
   const pptx = new PptxGenJS();
   pptx.layout = 'LAYOUT_16x9';
   const FONT = 'Yu Gothic';
@@ -2882,6 +2913,27 @@ $('btn-export-quick').addEventListener('click', ()=>{
   if(!sc || sc.hist.length === 0){ alert('この巻物にはまだ会話がありません'); return; }
   openExport('scroll', sc);
 });
+
+/* ========= 外部ライブラリの読込状態 ========= */
+function renderLibStatus(){
+  const el = $('lib-status');
+  if(!el) return;
+  const libs = [
+    ['PowerPoint出力', ()=>window.PptxGenJS],
+    ['Word出力',       ()=>window.docx],
+    ['グラフ描画',     ()=>window.Chart],
+    ['PDF読込',        ()=>window.pdfjsLib],
+    ['Word読込',       ()=>window.mammoth],
+    ['Excel読込',      ()=>window.XLSX],
+    ['PPT読込(ZIP)',   ()=>window.JSZip],
+    ['音声入力',       ()=>(window.SpeechRecognition||window.webkitSpeechRecognition)]
+  ];
+  const ng = libs.filter(l=>!l[1]());
+  el.innerHTML = ng.length === 0
+    ? '<span style="color:var(--ok)">✅ 全機能が利用可能です(出力・読込・グラフ・音声)</span>'
+    : '<span style="color:var(--ng)">⚠ 未読込: ' + ng.map(l=>l[0]).join(' / ')
+      + '</span><br>通信が遮断されている可能性があります(広告ブロッカー・社内ネットワーク等)。再読み込み(Ctrl+Shift+R)で回復することがあります。';
+}
 
 /* ========= 音声入力 ========= */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -3153,6 +3205,7 @@ function showDeities(list){
 fillForm();
 renderThread();
 renderErrLog();
+setTimeout(renderLibStatus, 1500);
 document.body.setAttribute('data-tab','quick');
 /* 音声入力の配線 */
 wireMic('mic-quick','quick-input');
