@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Capitoline Council — CapiCo v2.5</title>
+<title>Capitoline Council — CapiCo v2.6</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <!-- PowerPoint生成(JSZipを内包) -->
@@ -399,6 +399,19 @@
   .resume-panel.open{display:block}
   .resume-panel .rp-head{font-weight:bold;color:var(--split);font-size:14px;margin-bottom:8px}
   .resume-panel textarea{width:100%}
+  /* ===== 要綱モーダル ===== */
+  #dg-modal{position:fixed;inset:0;background:rgba(42,46,56,.62);display:none;z-index:120;padding:3vh 3vw}
+  #dg-modal.open{display:flex;align-items:center;justify-content:center}
+  .dg-card{background:#FFFDF6;border:2px solid var(--gold);border-radius:8px;width:min(860px,97vw);
+    max-height:94vh;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+  .dg-head{display:flex;align-items:center;gap:7px;padding:8px 12px;border-bottom:1px solid var(--edge);flex-wrap:wrap}
+  .dg-head .dgtitle{font-size:15px;font-weight:bold;color:var(--gold);flex:1;min-width:150px}
+  .dg-head .dgclose{background:#fff;border:1px solid var(--ng);color:var(--ng);border-radius:4px;
+    cursor:pointer;font-size:13px;padding:5px 11px;font-weight:bold}
+  .dg-body{padding:10px 14px;overflow-y:auto;flex:1;color:var(--ink);font-size:14.5px;line-height:1.6}
+  .dg-body table.rich-table{font-size:13.5px}
+  .dg-foot{display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid var(--edge);
+    background:var(--panel-2);flex-wrap:wrap}
   /* ===== エクスポートモーダル ===== */
   #exp-modal{position:fixed;inset:0;background:rgba(42,46,56,.6);display:none;z-index:110;padding:4vh 4vw}
   #exp-modal.open{display:flex;align-items:center;justify-content:center}
@@ -443,7 +456,7 @@
 <header>
   <div class="brand">
     <span class="en">CAPITOLINE COUNCIL</span>
-    <span class="jp">カピトリーノ評議会 — CapiCo v2.5 / Private AI Agents Company</span>
+    <span class="jp">カピトリーノ評議会 — CapiCo v2.6 / Private AI Agents Company</span>
   </div>
   <div class="chair-badge" id="chair-badge">現議長: <b>—</b></div>
   <div class="mem-badge" id="mem-badge">記憶: 未読込</div>
@@ -484,6 +497,7 @@
       <button class="btn ghost" id="btn-scroll-rename">改名</button>
       <button class="btn ghost" id="btn-scroll-del">削除</button>
       <label class="pin-label"><input type="checkbox" id="scroll-pin">📌大事(削除保護)</label>
+      <button class="btn ghost" id="btn-digest-quick" style="border-color:var(--gold);color:var(--gold);font-weight:bold">📋 要綱</button>
     </div>
 
     <details class="memsec" style="margin-bottom:12px">
@@ -570,6 +584,7 @@
       </div>
       <button class="btn gold" id="btn-council">評議会を招集する</button>
       <button class="btn stopbtn" id="btn-stop-council" style="display:none">⏸ 中断</button>
+      <button class="btn ghost" id="btn-digest-council" style="border-color:var(--gold);color:var(--gold);font-weight:bold;margin-left:8px">📋 要綱</button>
       <div class="resume-panel" id="resume-council">
         <div class="rp-head">⏸ 審議を中断しました — 追加・訂正を入力して再開できます</div>
         <div style="position:relative">
@@ -703,6 +718,11 @@
         <div><button class="btn ghost" id="btn-sync-save" style="margin-top:14px">同期設定のみ保存</button></div>
         <div><button class="btn ghost" id="btn-restore" style="margin-top:14px">⏪ 過去の版から復元</button></div>
       </div>
+      <div class="row">
+        <div><button class="btn ghost" id="btn-backup-file" style="margin-top:8px;border-color:var(--ok);color:var(--ok)">💾 全データをファイルに保存</button></div>
+        <div><button class="btn ghost" id="btn-restore-file" style="margin-top:8px">📂 ファイルから復元</button></div>
+      </div>
+      <input type="file" id="restore-file-input" accept=".json" hidden>
       <div class="note" id="sync-status">同期未設定。v0.6からは記憶に加え、巻物(会話)と書庫(評議会ログ)も丸ごと同期されます。</div>
       <div class="note warn">⚠ 患者の個人情報(氏名・特定可能な症例情報)は絶対に記入しないでください。</div>
     </div>
@@ -798,6 +818,7 @@
       <div class="row">
         <div><label class="pin-label"><input type="checkbox" id="wall-toggle">神殿を壁紙にする(全画面に神殿・読み枠は白地黒字)</label></div>
         <div><label class="pin-label"><input type="checkbox" id="chart-toggle" checked>📊 回答に表・グラフを使わせる</label></div>
+        <div><label class="pin-label"><input type="checkbox" id="autodigest-toggle" checked>📋 会話が進んだら要綱を自動更新(推奨)</label></div>
         <div><label for="wall-dim">壁紙の明るさ</label>
           <select id="wall-dim"><option value="bright">明るい</option><option value="dim">少し暗い(枠が読みやすい)</option></select>
         </div>
@@ -853,7 +874,27 @@
 </main>
 
 <input type="file" id="doc-file-input" multiple hidden accept=".docx,.doc,.xlsx,.xls,.xlsm,.pptx,.ppt,.pdf,.md,.txt,.csv,.json,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tif,.tiff,.heic,.heif">
-<footer>CAPITOLINE COUNCIL v2.5 — LIBRARY FIX / SELF-CHECK</footer>
+<footer>CAPITOLINE COUNCIL v2.6 — DIGEST (NEVER FORGET) / SYNC BUGFIX / BACKUP</footer>
+
+<div id="dg-modal" role="dialog" aria-modal="true">
+  <div class="dg-card">
+    <div class="dg-head">
+      <span class="dgtitle" id="dg-title">📋 要綱</span>
+      <button class="btn ghost" id="dg-toggle" style="margin:0;padding:5px 10px;font-size:12px">✏️ 編集</button>
+      <button class="btn ghost" id="dg-copy" style="margin:0;padding:5px 10px;font-size:12px">📎 コピー</button>
+      <button class="dgclose" id="dg-close">閉じる ✕</button>
+    </div>
+    <div class="dg-body">
+      <div id="dg-view"></div>
+      <textarea id="dg-edit" style="display:none;min-height:50vh;font-size:14px"></textarea>
+    </div>
+    <div class="dg-foot" id="dg-actions">
+      <span class="note" style="flex:1;margin:0">内容を確認し、必要なら「✏️編集」で直してから確定してください。確定した要綱は<b>以後すべての回答で必ず参照</b>されます。</span>
+      <button class="btn ghost" id="dg-cancel" style="margin:0">破棄</button>
+      <button class="btn gold" id="dg-save" style="margin:0">✅ この内容で確定</button>
+    </div>
+  </div>
+</div>
 
 <div id="print-area"></div>
 
@@ -1124,6 +1165,7 @@ $('doc-file-input').addEventListener('change', e=>{ handleFiles(e.target.files);
 
 /* ========= 自動同期エンジン ========= */
 let syncDirty = false, syncTimer = null, syncBusy = false;
+let LAST_SYNC_ERR = '';
 function syncReady(){ const s = syncConf(); return !!(s.ghToken && s.gistId && s.pass); }
 function setSyncBadge(cls, text){
   const b = $('sync-badge'); if(!b) return;
@@ -1132,6 +1174,7 @@ function setSyncBadge(cls, text){
   b.classList.toggle('warn2', cls === 'dirty');
 }
 function markDirty(){
+  localStorage.setItem('capico_unsaved','1');
   if(!syncReady()){ setSyncBadge('off','同期: 未設定'); return; }
   syncDirty = true;
   setSyncBadge('dirty','☁ 同期待ち…');
@@ -1153,9 +1196,15 @@ async function autoPush(){
     });
     if(!res.ok) throw new Error('HTTP '+res.status);
     syncDirty = false;
+    LAST_SYNC_ERR = '';
+    localStorage.setItem('capico_unsaved','0');
     setSyncBadge('ok','☁ 同期済 '+new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}));
   }catch(e){
-    setSyncBadge('dirty','⚠ 同期失敗(自動再試行)');
+    setSyncBadge('dirty','⚠ 同期失敗(タップで詳細)');
+    LAST_SYNC_ERR = e.message || String(e);
+    try{ errLog('sync', 'gist', 'push', LAST_SYNC_ERR); }catch(_){}
+    const st = $('sync-status');
+    if(st) st.textContent = '❌ 自動同期に失敗: ' + LAST_SYNC_ERR;
     clearTimeout(syncTimer);
     syncTimer = setTimeout(autoPush, 20000);
   }
@@ -1300,7 +1349,7 @@ function loadScrolls(){
 }
 function saveScrolls(s){
   /* 各巻物の履歴上限: 100メッセージ(約50往復)。古い発言から切り捨て */
-  s.list.forEach(sc=>{ if(sc.hist.length > 100) sc.hist = sc.hist.slice(-100); });
+  s.list.forEach(sc=>{ if(sc.hist.length > 400) sc.hist = sc.hist.slice(-400); });
   /* 巻物数上限: 20。📌なしの更新が古いものから削除 */
   while(s.list.length > 20){
     const un = s.list.filter(x=>!x.pinned && x.id !== s.activeId)
@@ -1342,7 +1391,7 @@ $('scroll-select').addEventListener('change', ()=>{
   const s = loadScrolls();
   s.activeId = $('scroll-select').value;
   saveScrolls(s);
-  renderScrollBar(); renderChat();
+  renderScrollBar(); renderChat(); updateDigestBadges();
 });
 $('btn-scroll-new').addEventListener('click', ()=>{
   const name = prompt('新しい巻物の名前(例: LUNA事業 / 医院経営 / 雑談)');
@@ -1384,7 +1433,14 @@ async function deriveKey(pass, salt){
   return crypto.subtle.deriveKey({name:'PBKDF2', salt, iterations:200000, hash:'SHA-256'}, km,
     {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']);
 }
-const b64 = a => btoa(String.fromCharCode(...new Uint8Array(a)));
+/* 大きなデータでもクラッシュしないBase64変換(分割処理) */
+const b64 = a => {
+  const u = new Uint8Array(a);
+  let str = '';
+  const CHUNK = 0x8000; /* 32KBずつ処理。一度に展開するとスタック超過で落ちる */
+  for(let i=0; i<u.length; i+=CHUNK) str += String.fromCharCode.apply(null, u.subarray(i, i+CHUNK));
+  return btoa(str);
+};
 const unb64 = s => Uint8Array.from(atob(s), c=>c.charCodeAt(0));
 async function encryptText(pass, text){
   const salt = crypto.getRandomValues(new Uint8Array(16));
@@ -1442,6 +1498,8 @@ async function memPush(){
     if(!res.ok) throw new Error('GitHub応答 '+res.status+': '+(data.message||''));
     if(!s.gistId && data.id){ $('gist-id').value = data.id; saveSyncConf(); }
     syncDirty = false;
+    LAST_SYNC_ERR = '';
+    localStorage.setItem('capico_unsaved','0');
     setSyncBadge('ok','☁ 同期済 '+new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}));
     $('sync-status').textContent = '✅ クラウド保存完了(' + new Date().toLocaleString('ja-JP') + ')。記憶+巻物+書庫を同期しました。';
   }catch(e){
@@ -1472,6 +1530,8 @@ async function memPull(silent){
     }
     buildMemUI(); refreshMemBadge(); renderScrollBar(); renderChat();
     syncDirty = false;
+    LAST_SYNC_ERR = '';
+    localStorage.setItem('capico_unsaved','0');
     setSyncBadge('ok','☁ 同期済 '+new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}));
     $('sync-status').textContent = '✅ クラウドから読込完了(記憶+巻物+書庫)';
     return true;
@@ -2014,7 +2074,8 @@ async function templeMeeting(seat, agenda, tiers, agentCountSetting, onUpdate, u
   const deity = DEITY[seat];
   const countRule = agentCountSetting === 'auto' ? '3〜5名(議題の複雑さに応じてあなたが決める)' : agentCountSetting + '名ちょうど';
   onUpdate('招集中');
-  const rosterSys = seatSys(seat) + ` あなたは${deity}神殿の長として、議題の審議に必要な専門subagentを編成する。`;
+  const rosterSys = seatSys(seat) + (window.CUR_DIGEST ? digestContext(window.CUR_DIGEST) : '')
+    + ` あなたは${deity}神殿の長として、議題の審議に必要な専門subagentを編成する。`;
   const rosterPrompt = `議題:\n${agenda}\n\nこの議題を多角的に審議するための専門subagentを${countRule}編成せよ。\n次のJSONのみを出力せよ(説明文・コードブロック禁止):\n{"agents":[{"role":"役職名","focus":"担当論点を一文で"}]}`;
   const rosterText = await callEngine(engine, tiers.chief, rosterSys, [{role:'user',content:rosterPrompt}], 800);
   let roster;
@@ -2025,7 +2086,8 @@ async function templeMeeting(seat, agenda, tiers, agentCountSetting, onUpdate, u
   const chips = roster.map(a=>{ const ch = addAgentChip(templeEl, a.role); ch.classList.add('think'); return ch; });
   onUpdate('内部討議中');
   const opinions = await Promise.all(roster.map(async (a, i)=>{
-    const sys = `あなたは${deity}神殿(カピトリーノ評議会)所属のsubagent「${a.role}」。担当論点: ${a.focus}。自分の専門的立場からのみ意見を述べよ。` + memoryContext() + docsContext();
+    const sys = `あなたは${deity}神殿(カピトリーノ評議会)所属のsubagent「${a.role}」。担当論点: ${a.focus}。自分の専門的立場からのみ意見を述べよ。`
+      + memoryContext() + docsContext() + (window.CUR_DIGEST ? digestContext(window.CUR_DIGEST) : '');
     const prompt = `議題:\n${agenda}\n\nあなたの立場からの意見を述べよ。${useWeb?'必要ならWeb検索で最新情報を確認し、検索した場合は根拠に情報源を一言添えよ。':''}形式: 【結論】一文 →【根拠】→【懸念・条件】。400字以内。`;
     try{
       const op = await callEngine(engine, tiers.sub, sys, [{role:'user',content:prompt}], 700, useWeb);
@@ -2095,6 +2157,9 @@ $('btn-council').addEventListener('click', async ()=>{
   btn.disabled = true; btn.textContent = '審議中…(2〜5分)';
   $('btn-stop-council').style.display = '';
   $('resume-council').classList.remove('open');
+  /* 再審議時は、それまでの要綱を全神殿に引き継ぐ(決定事項の消失を防ぐ) */
+  const prevSess = curSessId && getSessById(curSessId);
+  window.CUR_DIGEST = (prevSess && prevSess.digest) ? prevSess.digest : '';
   newAbort();
   let wasAborted = false;
   const costStart = monthTotals().total;
@@ -2187,7 +2252,8 @@ $('btn-council').addEventListener('click', async ()=>{
     $('session-cost').textContent = `この審議のコスト: 約¥${spent < 1 ? spent.toFixed(1) : Math.round(spent).toLocaleString()}` + (anyFail ? ' / ⚠一部subagentが応答失敗(設定タブのエラーログ参照)' : '');
     const list = loadSess();
     const newId = 'c'+Date.now();
-    list.push({id:newId, ts:new Date().toISOString(), agenda, mode, temples:results, rebuttal, ruling, costYen:spent, pinned:false, thread:[]});
+    list.push({id:newId, ts:new Date().toISOString(), agenda, mode, temples:results, rebuttal, ruling,
+      costYen:spent, pinned:false, thread:[], digest: window.CUR_DIGEST || '', digestAt:0});
     saveSess(list);
     curSessId = newId;
     renderThread();
@@ -2914,6 +2980,203 @@ $('btn-export-quick').addEventListener('click', ()=>{
   openExport('scroll', sc);
 });
 
+/* ========= 要綱(サマリー) — 決定事項を絶対に忘れないための中核 ========= */
+/*
+  仕組み: 会話が伸びるとAIには直近しか渡せない(コスト・上限の制約)。
+  そこで「確定事項・タスク・進捗」を構造化した要綱を育て、それは常に全文をAIに渡す。
+  → 何百発言してもの最初に決めた事が消えない。
+*/
+const DIGEST_EVERY = 5; /* AIの回答がこの回数たまるごとに要綱を更新提案 */
+
+function digestPrompt(kind, name, digestOld, convo){
+  return `あなたは主宰の議論の書記官である。以下の会話から「要綱」を作成・更新せよ。
+
+${digestOld ? '=== 現在の要綱(これを土台に、追加・修正・進捗更新せよ。既存の確定事項を勝手に削除するな) ===\n'+digestOld+'\n' : '(要綱はまだ無い。新規作成せよ)'}
+
+=== 対象の会話(${kind}: ${name}) ===
+${convo}
+
+=== 出力形式(この形式を厳守。前置き・後書き不要) ===
+# 📋 要綱: ${name}
+
+## 🎯 目的・ゴール
+(この議論で最終的に何を実現しようとしているか。1〜3行)
+
+## ✅ 確定事項
+| # | 決定内容 | 補足・条件 |
+|---|---|---|
+| 1 | (決まったこと) | (背景や前提) |
+
+## 📌 やるべき事リスト
+- 🔲 (未着手のタスク)
+  - ↳ 手順/やり方(あれば)
+- 🔄 (進行中のタスク) ← 進捗があれば明記
+- ✅ (完了したタスク)
+
+## ⏸ 保留・要検討
+- (決めきれていない論点と、決めるために必要な情報)
+
+## 🔀 検討中の分岐
+(選択肢が並立している場合のみ、表か箇条書きで整理。無ければ「なし」)
+
+=== 重要なルール ===
+・雑談・言い回し・思考過程は捨て、「決まったこと」「やること」「保留」だけを残せ
+・過去の確定事項は、明確に撤回・変更されない限り必ず残せ(勝手に消すのは重大な過失)
+・変更された場合は変更後の内容にし、補足欄に「(旧: ○○から変更)」と記せ
+・完了したタスクは ✅ に変え、消さずに残せ
+・簡潔に。ただし決定の根拠となる数字・期限・固有名詞は必ず残せ`;
+}
+
+/* 要綱の生成 */
+async function makeDigest(kind, obj, silent){
+  const c = getConf();
+  let name, convo, digestOld = obj.digest || '';
+  if(kind === '巻物'){
+    name = obj.name;
+    convo = obj.hist.slice(-40).map(m=>(m.role==='user'?'主宰: ':'議長: ')+m.content).join('\n');
+  }else{
+    name = (obj.agenda||'').slice(0,40);
+    convo = `【議題】${obj.agenda}\n【最終裁定】${obj.ruling||''}\n`
+      + (obj.thread||[]).slice(-30).map(m=>(m.role==='user'?'主宰: ':'議長: ')+m.content).join('\n');
+  }
+  if(convo.length > 24000) convo = '(前略)' + convo.slice(-24000);
+  const sys = seatSys('jupiter', false) + ' あなたは議論の書記官として、決定事項の台帳(要綱)を正確に維持する責任を負う。';
+  return await callEngine(c.seats.jupiter, 'std', sys,
+    [{role:'user', content: digestPrompt(kind, name, digestOld, convo)}], 3000, false);
+}
+
+/* 要綱の確認モーダル */
+let DIGEST_PENDING = null; /* {kind, obj, text, save} */
+function openDigestModal(kind, obj, text, isNew){
+  DIGEST_PENDING = {kind, obj, text};
+  $('dg-title').textContent = isNew ? '📋 要綱の更新案 — ご確認ください' : '📋 要綱';
+  $('dg-edit').value = text;
+  renderRich($('dg-view'), text);
+  $('dg-view').style.display = '';
+  $('dg-edit').style.display = 'none';
+  $('dg-actions').style.display = isNew ? '' : 'none';
+  $('dg-modal').classList.add('open');
+}
+function saveDigest(){
+  if(!DIGEST_PENDING) return;
+  const {kind, obj} = DIGEST_PENDING;
+  const text = $('dg-edit').style.display === 'none' ? DIGEST_PENDING.text : $('dg-edit').value;
+  if(kind === '巻物'){
+    const st = loadScrolls();
+    const sc = st.list.find(x=>x.id === obj.id);
+    if(sc){ sc.digest = text; sc.digestAt = sc.hist.length; saveScrolls(st); renderScrollBar(); }
+  }else{
+    const all = loadSess();
+    const ss = all.find(x=>x.id === obj.id);
+    if(ss){ ss.digest = text; ss.digestAt = (ss.thread||[]).length; localStorage.setItem(SESS_KEY, JSON.stringify(all)); markDirty(); }
+  }
+  DIGEST_PENDING = null;
+  $('dg-modal').classList.remove('open');
+  updateDigestBadges();
+}
+
+/* 要綱をAIに渡す文脈(常に全文・絶対に切らない) */
+function digestContext(digest){
+  if(!digest) return '';
+  return `\n\n=== 【最重要】この議題の要綱(これまでの確定事項・タスク・進捗) ===
+以下は、この議論でこれまでに確定した事項の台帳である。会話履歴が長くなっても、ここに書かれた内容は
+必ず前提として維持せよ。ここに書かれた確定事項を忘れたり、矛盾する発言をしてはならない。
+${digest}
+=== 要綱ここまで ===`;
+}
+
+/* 要綱ボタンの状態表示 */
+function updateDigestBadges(){
+  const sc = activeScroll();
+  const b = $('btn-digest-quick');
+  if(b && sc){
+    const since = sc.hist.length - (sc.digestAt || 0);
+    const need = since >= DIGEST_EVERY*2;
+    b.textContent = sc.digest ? (need ? '📋 要綱(更新推奨)' : '📋 要綱') : '📋 要綱を作成';
+    b.style.borderColor = need ? 'var(--ng)' : 'var(--gold)';
+    b.style.color = need ? 'var(--ng)' : 'var(--gold)';
+  }
+  const bc = $('btn-digest-council');
+  if(bc){
+    const ss = curSessId && getSessById(curSessId);
+    bc.textContent = (ss && ss.digest) ? '📋 要綱' : '📋 要綱を作成';
+  }
+}
+
+/* 手動: 要綱ボタン */
+async function digestNow(kind){
+  let obj;
+  if(kind === '巻物'){
+    obj = activeScroll();
+    if(!obj || obj.hist.length < 2){ alert('この巻物にはまだ会話がありません'); return; }
+  }else{
+    obj = curSessId && getSessById(curSessId);
+    if(!obj){ alert('先に評議会を実行するか、書庫から「再開」してください'); return; }
+  }
+  /* 既存の要綱があり、新しい会話が無ければ閲覧だけ */
+  const since = kind === '巻物'
+    ? obj.hist.length - (obj.digestAt||0)
+    : (obj.thread||[]).length - (obj.digestAt||0);
+  if(obj.digest && since === 0){ openDigestModal(kind, obj, obj.digest, false); return; }
+
+  const btn = kind === '巻物' ? $('btn-digest-quick') : $('btn-digest-council');
+  const orig = btn.textContent;
+  btn.disabled = true; btn.textContent = '要綱を作成中…';
+  try{
+    const text = await makeDigest(kind, obj, false);
+    openDigestModal(kind, obj, text, true);
+  }catch(e){ alert('要綱の作成に失敗: ' + e.message); }
+  btn.disabled = false; btn.textContent = orig;
+  updateDigestBadges();
+}
+
+/* 自動: 一定数たまったら要綱を更新提案 */
+async function maybeAutoDigest(kind, obj){
+  if(localStorage.getItem('capico_autodigest') === '0') return;
+  const len = kind === '巻物' ? obj.hist.length : (obj.thread||[]).length;
+  const since = len - (obj.digestAt || 0);
+  if(since < DIGEST_EVERY * 2) return; /* 主宰+議長で2件/往復 */
+  try{
+    const text = await makeDigest(kind, obj, true);
+    openDigestModal(kind, obj, text, true);
+  }catch(e){ /* 自動生成の失敗は黙って見送り(次の機会に再挑戦) */ }
+}
+
+/* ========= バックアップ / 復元(ファイル) ========= */
+const BK_KEYS = ['capico_memory_v1','capico_scrolls_v1','capico_council_sessions_v1','capico_config_v1','capico_usage_v1','capico_errlog_v1'];
+function doBackupFile(){
+  const d = {_capico:'backup', _at:new Date().toISOString(), _ver:'2.6'};
+  BK_KEYS.forEach(k=>{ const v = localStorage.getItem(k); if(v !== null) d[k] = v; });
+  const blob = new Blob([JSON.stringify(d)], {type:'application/json'});
+  const name = 'capico_backup_' + new Date().toISOString().slice(0,16).replace(/[:T]/g,'-') + '.json';
+  dlBlob(blob, name);
+  const st = $('sync-status');
+  if(st) st.textContent = '💾 ' + name + ' をダウンロードしました。これがあれば何があっても復元できます。';
+}
+async function doRestoreFile(file){
+  try{
+    const d = JSON.parse(await file.text());
+    if(d._capico !== 'backup') throw new Error('CapiCoのバックアップファイルではありません');
+    const cnt = {
+      巻物: (()=>{ try{ return (JSON.parse(d.capico_scrolls_v1||'{}').list||[]).length; }catch(e){ return 0; } })(),
+      評議会: (()=>{ try{ return (JSON.parse(d.capico_council_sessions_v1||'[]')).length; }catch(e){ return 0; } })()
+    };
+    if(!confirm(`このバックアップを復元します。\n\n作成日時: ${new Date(d._at).toLocaleString('ja-JP')}\n巻物: ${cnt.巻物}本 / 評議会: ${cnt.評議会}件\n\n⚠ この端末の現在の内容は置き換わります。よろしいですか?`)) return;
+    /* APIキー等の設定は現在のものを尊重(端末固有のため) */
+    BK_KEYS.filter(k=>k!=='capico_config_v1').forEach(k=>{ if(d[k] !== undefined) localStorage.setItem(k, d[k]); });
+    buildMemUI(); refreshMemBadge(); renderScrollBar(); renderChat(); renderArchive();
+    markDirty();
+    $('sync-status').textContent = '✅ ファイルから復元しました。この内容が最新版としてクラウドへ同期されます。';
+    alert('✅ 復元しました');
+  }catch(e){ alert('復元に失敗: ' + e.message); }
+}
+$('btn-backup-file').addEventListener('click', doBackupFile);
+$('btn-restore-file').addEventListener('click', ()=> $('restore-file-input').click());
+$('restore-file-input').addEventListener('change', e=>{
+  if(e.target.files[0]) doRestoreFile(e.target.files[0]);
+  e.target.value = '';
+});
+
 /* ========= 外部ライブラリの読込状態 ========= */
 function renderLibStatus(){
   const el = $('lib-status');
@@ -3138,6 +3401,32 @@ function renderRich(el, text){
   });
 }
 
+/* --- 要綱モーダルの操作 --- */
+$('btn-digest-quick').addEventListener('click', ()=> digestNow('巻物'));
+$('btn-digest-council').addEventListener('click', ()=> digestNow('評議会'));
+$('dg-close').addEventListener('click', ()=>{ $('dg-modal').classList.remove('open'); DIGEST_PENDING=null; });
+$('dg-cancel').addEventListener('click', ()=>{ $('dg-modal').classList.remove('open'); DIGEST_PENDING=null; });
+$('dg-save').addEventListener('click', saveDigest);
+$('dg-toggle').addEventListener('click', ()=>{
+  const editing = $('dg-edit').style.display !== 'none';
+  if(editing){
+    /* 編集→表示 */
+    if(DIGEST_PENDING) DIGEST_PENDING.text = $('dg-edit').value;
+    renderRich($('dg-view'), $('dg-edit').value);
+    $('dg-view').style.display = ''; $('dg-edit').style.display = 'none';
+    $('dg-toggle').textContent = '✏️ 編集';
+  }else{
+    $('dg-edit').value = DIGEST_PENDING ? DIGEST_PENDING.text : $('dg-edit').value;
+    $('dg-view').style.display = 'none'; $('dg-edit').style.display = '';
+    $('dg-toggle').textContent = '👁 表示';
+  }
+});
+$('dg-copy').addEventListener('click', async ()=>{
+  const t = DIGEST_PENDING ? DIGEST_PENDING.text : $('dg-edit').value;
+  try{ await navigator.clipboard.writeText(t); alert('要綱をコピーしました'); }
+  catch(e){ openViewer('要綱(手動でコピー)', t); }
+});
+
 /* ========= 起動時 ========= */
 ['web-quick','web-council'].forEach(id=>{
   const el = $(id);
@@ -3181,6 +3470,10 @@ function applyWallpaper(){
   }
   document.body.classList.toggle('wallpaper', on);
 }
+$('autodigest-toggle').checked = localStorage.getItem('capico_autodigest') !== '0';
+$('autodigest-toggle').addEventListener('change', ()=>{
+  localStorage.setItem('capico_autodigest', $('autodigest-toggle').checked ? '1' : '0');
+});
 $('chart-toggle').checked = localStorage.getItem('capico_chart') !== '0';
 $('chart-toggle').addEventListener('change', ()=>{
   localStorage.setItem('capico_chart', $('chart-toggle').checked ? '1' : '0');
@@ -3206,6 +3499,7 @@ fillForm();
 renderThread();
 renderErrLog();
 setTimeout(renderLibStatus, 1500);
+updateDigestBadges();
 document.body.setAttribute('data-tab','quick');
 /* 音声入力の配線 */
 wireMic('mic-quick','quick-input');
@@ -3214,11 +3508,24 @@ wireMic('mic-followup','council-followup');
 wireMic('mic-resume-quick','resume-quick-text');
 wireMic('mic-resume-council','resume-council-text');
 $('sync-badge').addEventListener('click', ()=>{
-  if(syncReady()){ syncDirty = true; autoPush(); }
-  else document.querySelector('nav button[data-screen="memory"]').click();
+  if(!syncReady()){ document.querySelector('nav button[data-screen="memory"]').click(); return; }
+  if(LAST_SYNC_ERR){
+    if(confirm('前回の同期エラー:\n\n' + LAST_SYNC_ERR + '\n\n再試行しますか?')){
+      LAST_SYNC_ERR = ''; syncDirty = true; autoPush();
+    }
+    return;
+  }
+  syncDirty = true; autoPush();
 });
 (async ()=>{
   if(syncReady()){
+    /* 安全装置: 前回、未保存のまま終了した形跡があれば自動読込しない(上書き事故の防止) */
+    if(localStorage.getItem('capico_unsaved') === '1'){
+      setSyncBadge('dirty','⚠ 未保存の作業あり');
+      $('sync-status').textContent = '⚠ 前回、クラウドに保存されていない作業がこの端末に残っています。'
+        + '内容を確認のうえ「☁クラウドへ保存」を押してください(自動読込は行いませんでした)。';
+      return;
+    }
     setSyncBadge('dirty','☁ 読込中…');
     $('sync-status').textContent = '起動時自動読込中…';
     await memPull(true);
