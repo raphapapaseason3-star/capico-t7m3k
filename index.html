@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Capitoline Council — CapiCo v2.8</title>
+<title>Capitoline Council — CapiCo v2.9</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <!-- PowerPoint生成(JSZipを内包) -->
@@ -14,6 +14,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
 <!-- pptx読込用(pptxgenのJSZipを上書きしないよう最後に) -->
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
 <script>
 /* CDNが読めなかった場合は別ミラーから自動再取得 */
 (function(){
@@ -22,6 +23,7 @@
     {test:()=>window.docx,      url:'https://unpkg.com/docx@8.5.0/build/index.umd.js',           name:'Word'},
     {test:()=>window.Chart,     url:'https://unpkg.com/chart.js@4.4.0/dist/chart.umd.js',        name:'グラフ'},
     {test:()=>window.JSZip,     url:'https://unpkg.com/jszip@3.10.1/dist/jszip.min.js',          name:'ZIP'},
+    {test:()=>window.pako,      url:'https://unpkg.com/pako@2.1.0/dist/pako.min.js',              name:'圧縮'},
     {test:()=>window.mammoth,   url:'https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js',    name:'Word読込'},
     {test:()=>window.XLSX,      url:'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js',       name:'Excel'},
     {test:()=>window.pdfjsLib,  url:'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js',    name:'PDF'}
@@ -486,7 +488,7 @@
 <header>
   <div class="brand">
     <span class="en">CAPITOLINE COUNCIL</span>
-    <span class="jp">カピトリーノ評議会 — CapiCo v2.8 / Private AI Agents Company</span>
+    <span class="jp">カピトリーノ評議会 — CapiCo v2.9 / Private AI Agents Company</span>
   </div>
   <div class="chair-badge" id="chair-badge">現議長: <b>—</b></div>
   <div class="mem-badge" id="mem-badge">記憶: 未読込</div>
@@ -911,7 +913,7 @@
 </main>
 
 <input type="file" id="doc-file-input" multiple hidden accept=".docx,.doc,.xlsx,.xls,.xlsm,.pptx,.ppt,.pdf,.md,.txt,.csv,.json,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tif,.tiff,.heic,.heif">
-<footer>CAPITOLINE COUNCIL v2.8 — FACT-CHECK MODE (ANTI-HALLUCINATION)</footer>
+<footer>CAPITOLINE COUNCIL v2.9 — GZIP SYNC (FIXES MOBILE LOAD ERROR)</footer>
 
 <div id="dg-modal" role="dialog" aria-modal="true">
   <div class="dg-card">
@@ -1484,14 +1486,27 @@ async function encryptText(pass, text){
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await deriveKey(pass, salt);
-  const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, new TextEncoder().encode(text));
-  return JSON.stringify({v:1, salt:b64(salt), iv:b64(iv), data:b64(ct)});
+  /* gzip圧縮してから暗号化(データが50〜160分の1に。携帯の途中切れを防ぐ) */
+  let payloadBytes, compressed = false;
+  if(window.pako){
+    try{ payloadBytes = pako.gzip(text); compressed = true; }
+    catch(e){ payloadBytes = new TextEncoder().encode(text); }
+  }else{
+    payloadBytes = new TextEncoder().encode(text);
+  }
+  const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, payloadBytes);
+  return JSON.stringify({v:2, gz:compressed, salt:b64(salt), iv:b64(iv), data:b64(ct)});
 }
 async function decryptText(pass, payload){
   const p = JSON.parse(payload);
   const key = await deriveKey(pass, unb64(p.salt));
-  const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:unb64(p.iv)}, key, unb64(p.data));
-  return new TextDecoder().decode(pt);
+  const ptBuf = await crypto.subtle.decrypt({name:'AES-GCM', iv:unb64(p.iv)}, key, unb64(p.data));
+  /* v2かつgz圧縮なら解凍、旧v1(非圧縮)はそのままデコード(後方互換) */
+  if(p.v === 2 && p.gz){
+    if(!window.pako) throw new Error('解凍ライブラリ(pako)が読み込めていません。再読み込みしてください');
+    return pako.ungzip(new Uint8Array(ptBuf), {to:'string'});
+  }
+  return new TextDecoder().decode(ptBuf);
 }
 
 /* ========= Gist同期(記憶+巻物+書庫) ========= */
@@ -1515,7 +1530,9 @@ async function memPush(){
   $('sync-status').textContent = '暗号化してクラウドへ保存中…';
   try{
     const bundle = {fmt:2, savedAt:new Date().toISOString(), mem:m, scrolls:loadScrolls(), sess:loadSess()};
-    const cipher = await encryptText(s.pass, JSON.stringify(bundle));
+    const raw = JSON.stringify(bundle);
+    const cipher = await encryptText(s.pass, raw);
+    const ratio = raw.length > 0 ? Math.max(1, Math.round(raw.length / cipher.length)) : 1;
     const body = {description:'CapiCo encrypted memory', files:{'capico_memory.enc':{content:cipher}}};
     let res;
     if(s.gistId){
@@ -1539,7 +1556,7 @@ async function memPush(){
     LAST_SYNC_ERR = '';
     localStorage.setItem('capico_unsaved','0');
     setSyncBadge('ok','☁ 同期済 '+new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}));
-    $('sync-status').textContent = '✅ クラウド保存完了(' + new Date().toLocaleString('ja-JP') + ')。記憶+巻物+書庫を同期しました。';
+    $('sync-status').textContent = '✅ クラウド保存完了(' + new Date().toLocaleString('ja-JP') + ')。記憶+巻物+書庫を同期(圧縮で約'+ratio+'分の1)。';
   }catch(e){
     $('sync-status').textContent = '❌ 保存失敗: ' + e.message;
   }
@@ -1574,7 +1591,11 @@ async function memPull(silent){
     $('sync-status').textContent = '✅ クラウドから読込完了(記憶+巻物+書庫)';
     return true;
   }catch(e){
-    $('sync-status').textContent = '❌ 読込失敗: ' + e.message + '(パスフレーズ違いの可能性もあります)';
+    let hint = '';
+    if(/Unterminated|Unexpected end|JSON/.test(e.message)) hint = ' ← データ受信が途中で切れた可能性。通信環境を変えて再試行を(この版は圧縮対応済みなので、一度PCで保存し直すと解決します)';
+    else if(/operation-specific|decrypt|OperationError/.test(e.message)) hint = ' ← パスフレーズが違う可能性があります';
+    $('sync-status').textContent = '❌ 読込失敗: ' + e.message + hint;
+    LAST_SYNC_ERR = e.message;
     return false;
   }
 }
