@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Capitoline Council — CapiCo v2.9</title>
+<title>Capitoline Council — CapiCo v3.0</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <!-- PowerPoint生成(JSZipを内包) -->
@@ -382,6 +382,11 @@
   .btn.mic.inline{position:absolute;right:6px;bottom:6px;padding:5px 8px;font-size:15px;opacity:.85}
   .btn.mic.inline:hover{opacity:1}
   .btn.mic.inline.rec{font-size:11px;padding:5px 8px}
+  /* ===== 評議会の巻物セレクタ ===== */
+  .council-scroll-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .council-scroll-row select{flex:1;min-width:160px;font-size:15px;padding:8px 10px}
+  .council-scroll-row .btn{margin:0;padding:8px 12px;font-size:13px;white-space:nowrap}
+  #btn-council-suggest{border-color:var(--gold);color:var(--gold)}
   /* ===== 事実検証の表示 ===== */
   .msg.sys-note{background:#EEF4FF;border:1px dashed #9DB8E0;color:#2A4A72;font-size:13px;
     padding:6px 10px;border-radius:5px;margin:6px 0;max-width:100%;text-align:center}
@@ -488,7 +493,7 @@
 <header>
   <div class="brand">
     <span class="en">CAPITOLINE COUNCIL</span>
-    <span class="jp">カピトリーノ評議会 — CapiCo v2.9 / Private AI Agents Company</span>
+    <span class="jp">カピトリーノ評議会 — CapiCo v3.0 / Private AI Agents Company</span>
   </div>
   <div class="chair-badge" id="chair-badge">現議長: <b>—</b></div>
   <div class="mem-badge" id="mem-badge">記憶: 未読込</div>
@@ -581,7 +586,14 @@
   <section class="screen" id="screen-council">
     <h2>COUNCIL SESSION<span class="jp">評議会モード — 三神殿の討議</span></h2>
     <div class="card" id="agenda-card">
-      <label for="agenda">議題(相談・判断したいことを具体的に)</label>
+      <label for="council-scroll-select">📜 この議題を保存する巻物(カテゴリー)</label>
+      <div class="council-scroll-row">
+        <select id="council-scroll-select"></select>
+        <button class="btn ghost" id="btn-council-newscroll" title="新しい巻物を作る">＋新規</button>
+        <button class="btn ghost" id="btn-council-suggest" title="議題の内容からAIが巻物を提案">🔮 AIに提案させる</button>
+      </div>
+      <div class="note" id="council-scroll-note" style="margin-top:3px">審議結果はここで選んだ巻物に紐づいて書庫に保存されます。快答タブと連動しています。</div>
+      <label for="agenda" style="margin-top:10px">議題(相談・判断したいことを具体的に)</label>
       <div style="position:relative">
         <textarea id="agenda" rows="3" placeholder="例: 〇〇の導入を進めるべきか。予算は△△、懸念は□□。"></textarea>
         <button class="btn mic inline" id="mic-agenda" title="音声入力">🎤</button>
@@ -913,7 +925,7 @@
 </main>
 
 <input type="file" id="doc-file-input" multiple hidden accept=".docx,.doc,.xlsx,.xls,.xlsm,.pptx,.ppt,.pdf,.md,.txt,.csv,.json,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tif,.tiff,.heic,.heif">
-<footer>CAPITOLINE COUNCIL v2.9 — GZIP SYNC (FIXES MOBILE LOAD ERROR)</footer>
+<footer>CAPITOLINE COUNCIL v3.0 — SCROLL PICKER IN COUNCIL / AI CATEGORY</footer>
 
 <div id="dg-modal" role="dialog" aria-modal="true">
   <div class="dg-card">
@@ -1406,9 +1418,11 @@ function activeScroll(){
 }
 function renderScrollBar(){
   const s = loadScrolls();
+  const sorted = s.list.slice().sort((a,b)=>(b.updated||'').localeCompare(a.updated||''));
+  /* 快答タブのセレクタ */
   const sel = $('scroll-select');
   sel.innerHTML = '';
-  s.list.slice().sort((a,b)=>(b.updated||'').localeCompare(a.updated||'')).forEach(sc=>{
+  sorted.forEach(sc=>{
     const o = document.createElement('option');
     o.value = sc.id; o.textContent = (sc.pinned?'📌':'') + sc.name;
     if(sc.id === s.activeId) o.selected = true;
@@ -1416,6 +1430,17 @@ function renderScrollBar(){
   });
   const act = s.list.find(x=>x.id===s.activeId);
   $('scroll-pin').checked = !!(act && act.pinned);
+  /* 評議会タブのセレクタ(同じ巻物リストを共有) */
+  const csel = $('council-scroll-select');
+  if(csel){
+    csel.innerHTML = '';
+    sorted.forEach(sc=>{
+      const o = document.createElement('option');
+      o.value = sc.id; o.textContent = (sc.pinned?'📌':'') + sc.name;
+      if(sc.id === s.activeId) o.selected = true;
+      csel.appendChild(o);
+    });
+  }
 }
 function renderChat(){
   const box = $('chat-box');
@@ -1432,6 +1457,63 @@ $('scroll-select').addEventListener('change', ()=>{
   s.activeId = $('scroll-select').value;
   saveScrolls(s);
   renderScrollBar(); renderChat(); updateDigestBadges();
+});
+/* 評議会側: 巻物を切り替え(快答と連動) */
+$('council-scroll-select').addEventListener('change', ()=>{
+  const s = loadScrolls();
+  s.activeId = $('council-scroll-select').value;
+  saveScrolls(s);
+  renderScrollBar(); renderChat(); updateDigestBadges();
+});
+/* 評議会側: 新しい巻物を作る */
+$('btn-council-newscroll').addEventListener('click', ()=>{
+  const name = prompt('新しい巻物の名前(例: LUNA事業 / 福地眼科 / 医院経営)');
+  if(!name) return;
+  const s = loadScrolls();
+  const sc = {id:'s'+Date.now(), name:name.trim(), pinned:false,
+    created:new Date().toISOString(), updated:new Date().toISOString(), hist:[]};
+  s.list.push(sc); s.activeId = sc.id;
+  saveScrolls(s); renderScrollBar(); renderChat();
+});
+/* 評議会側: 議題内容からAIが巻物を提案 */
+$('btn-council-suggest').addEventListener('click', async ()=>{
+  const agenda = $('agenda').value.trim();
+  if(!agenda){ alert('先に議題を入力してください(内容を読んで巻物を提案します)'); return; }
+  const s = loadScrolls();
+  const names = s.list.map(x=>x.name);
+  const btn = $('btn-council-suggest');
+  const orig = btn.textContent;
+  btn.disabled = true; btn.textContent = '提案中…';
+  try{
+    const c = getConf();
+    const sys = 'あなたは議題を適切なカテゴリー(巻物)に仕分ける司書である。日本語で簡潔に答えよ。';
+    const prompt = `議題:\n「${agenda}」\n\n既存の巻物(カテゴリー)一覧:\n${names.map((n,i)=>`${i+1}. ${n}`).join('\n')}\n\n`
+      + `この議題は既存のどの巻物に最も合うか。もし合うものが無ければ新しい巻物名を提案せよ。\n`
+      + `次のJSON形式のみで答えよ(前後に説明文を付けるな):\n`
+      + `{"match":"既存の巻物名 または null","suggest":"新規提案する巻物名 または null","reason":"20字以内の理由"}`;
+    let raw = await callEngine(c.seats.jupiter, 'eco', sys, [{role:'user',content:prompt}], 300, false);
+    raw = raw.replace(/```json|```/g,'').trim();
+    const r = JSON.parse(raw);
+    let msg, targetId = null;
+    if(r.match && names.includes(r.match)){
+      msg = `この議題は既存の巻物「${r.match}」が最適です。\n理由: ${r.reason||''}\n\nこの巻物に切り替えますか?`;
+      if(confirm(msg)){
+        const target = s.list.find(x=>x.name===r.match);
+        s.activeId = target.id; saveScrolls(s); renderScrollBar(); renderChat(); updateDigestBadges();
+      }
+    }else if(r.suggest){
+      msg = `既存に適した巻物が無いため、新規作成を提案します:\n\n「${r.suggest}」\n理由: ${r.reason||''}\n\nこの名前で新しい巻物を作りますか?`;
+      if(confirm(msg)){
+        const sc = {id:'s'+Date.now(), name:r.suggest.trim(), pinned:false,
+          created:new Date().toISOString(), updated:new Date().toISOString(), hist:[]};
+        s.list.push(sc); s.activeId = sc.id;
+        saveScrolls(s); renderScrollBar(); renderChat();
+      }
+    }else{
+      alert('提案を得られませんでした。手動で巻物を選んでください。');
+    }
+  }catch(e){ alert('提案に失敗しました: ' + e.message + '\n手動で巻物を選んでください。'); }
+  btn.disabled = false; btn.textContent = orig;
 });
 $('btn-scroll-new').addEventListener('click', ()=>{
   const name = prompt('新しい巻物の名前(例: LUNA事業 / 医院経営 / 雑談)');
@@ -2170,7 +2252,8 @@ function renderArchive(){
     const when = document.createElement('span'); when.className = 'when';
     when.textContent = new Date(s.ts).toLocaleString('ja-JP').slice(0,16);
     const title = document.createElement('span'); title.className = 'title';
-    title.textContent = (s.mode==='max'?'【深慮】':'') + (s.agenda||'').slice(0,60);
+    const scrollTag = s.scrollName ? `〔${s.scrollName}〕` : '';
+    title.textContent = (s.mode==='max'?'【深慮】':'') + scrollTag + (s.agenda||'').slice(0,55);
     title.addEventListener('click', ()=> openViewer('評議会記録: '+(s.agenda||'').slice(0,30), sessFullText(s)));
     const cost = document.createElement('span'); cost.className = 'cost';
     cost.textContent = s.costYen !== undefined ? '¥'+Math.round(s.costYen) : '';
@@ -2396,8 +2479,10 @@ $('btn-council').addEventListener('click', async ()=>{
     $('session-cost').textContent = `この審議のコスト: 約¥${spent < 1 ? spent.toFixed(1) : Math.round(spent).toLocaleString()}` + (anyFail ? ' / ⚠一部subagentが応答失敗(設定タブのエラーログ参照)' : '');
     const list = loadSess();
     const newId = 'c'+Date.now();
+    const _sc = activeScroll();
     list.push({id:newId, ts:new Date().toISOString(), agenda, mode, temples:results, rebuttal, ruling,
-      costYen:spent, pinned:false, thread:[], digest: window.CUR_DIGEST || '', digestAt:0});
+      costYen:spent, pinned:false, thread:[], digest: window.CUR_DIGEST || '', digestAt:0,
+      scrollId: _sc ? _sc.id : null, scrollName: _sc ? _sc.name : ''});
     saveSess(list);
     curSessId = newId;
     renderThread();
