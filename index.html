@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Capitoline Council — CapiCo v2.6</title>
+<title>Capitoline Council — CapiCo v2.7</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <!-- PowerPoint生成(JSZipを内包) -->
@@ -412,6 +412,28 @@
   .dg-body table.rich-table{font-size:13.5px}
   .dg-foot{display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid var(--edge);
     background:var(--panel-2);flex-wrap:wrap}
+  /* ===== 継続審議: 折りたたみ・集中モード・最下部ボタン ===== */
+  .phase-label.collapsible{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .focus-btn{margin:0;padding:5px 12px;font-size:13px;border-color:var(--gold);color:var(--gold);font-weight:bold;white-space:nowrap}
+  .thread-wrap{position:relative}
+  #council-thread{min-height:200px;max-height:46vh}
+  .scroll-bottom-btn{position:absolute;right:12px;bottom:12px;z-index:5;
+    background:var(--gold);color:#fff;border:none;border-radius:20px;padding:7px 14px;
+    font-size:13px;font-weight:bold;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.28);
+    opacity:0;pointer-events:none;transition:opacity .2s}
+  .scroll-bottom-btn.show{opacity:.95;pointer-events:auto}
+  .scroll-bottom-btn:hover{filter:brightness(1.08)}
+  /* 集中モード: 評議会の結果(PHASE1-3)と議題入力を隠し、対話を画面いっぱいに */
+  body.focus-council #agenda-card,
+  body.focus-council #phase1-label, body.focus-council .pillars,
+  body.focus-council #phase2-label, body.focus-council .stage2,
+  body.focus-council #phase3-label, body.focus-council .ruling,
+  body.focus-council #screen-council > h2,
+  body.focus-council .sanctum{display:none !important}
+  body.focus-council #council-thread{max-height:74vh;min-height:60vh}
+  body.focus-council #phase4-label{margin-top:0}
+  body.focus-council .focus-btn{background:var(--gold);color:#fff}
+
   /* ===== エクスポートモーダル ===== */
   #exp-modal{position:fixed;inset:0;background:rgba(42,46,56,.6);display:none;z-index:110;padding:4vh 4vw}
   #exp-modal.open{display:flex;align-items:center;justify-content:center}
@@ -456,7 +478,7 @@
 <header>
   <div class="brand">
     <span class="en">CAPITOLINE COUNCIL</span>
-    <span class="jp">カピトリーノ評議会 — CapiCo v2.6 / Private AI Agents Company</span>
+    <span class="jp">カピトリーノ評議会 — CapiCo v2.7 / Private AI Agents Company</span>
   </div>
   <div class="chair-badge" id="chair-badge">現議長: <b>—</b></div>
   <div class="mem-badge" id="mem-badge">記憶: 未読込</div>
@@ -548,7 +570,7 @@
   <!-- 評議会モード -->
   <section class="screen" id="screen-council">
     <h2>COUNCIL SESSION<span class="jp">評議会モード — 三神殿の討議</span></h2>
-    <div class="card">
+    <div class="card" id="agenda-card">
       <label for="agenda">議題(相談・判断したいことを具体的に)</label>
       <div style="position:relative">
         <textarea id="agenda" rows="3" placeholder="例: 〇〇の導入を進めるべきか。予算は△△、懸念は□□。"></textarea>
@@ -665,9 +687,15 @@
       <div class="session-cost" id="session-cost"></div>
     </div>
 
-    <div class="phase-label" style="margin-top:24px">PHASE 4 — 継続審議(裁定への質問・修正要望・次のステップ指示)</div>
-    <div class="card">
-      <div class="chat-box" id="council-thread" style="min-height:120px;max-height:44vh"></div>
+    <div class="phase-label collapsible" id="phase4-label" style="margin-top:16px">
+      <span>PHASE 4 — 継続審議(議長と対話)</span>
+      <button class="btn ghost focus-btn" id="btn-focus-mode" title="評議会の結果を折りたたんで対話に集中">⤢ 集中モード</button>
+    </div>
+    <div class="card" id="phase4-card">
+      <div class="thread-wrap">
+        <div class="chat-box" id="council-thread"></div>
+        <button class="scroll-bottom-btn" id="btn-scroll-bottom" title="最新のやり取りへ">⬇ 最新へ</button>
+      </div>
       <div class="chat-input">
         <textarea id="council-followup" rows="2" placeholder="裁定への質問・修正要望・次のステップ指示を入力(Ctrl+Enterで議長対話)"></textarea>
         <button class="btn mic" id="mic-followup" title="音声入力">🎤</button>
@@ -678,7 +706,7 @@
         <div><button class="btn ghost" id="btn-workorder" style="margin-top:14px">📋 実行指示書を作成</button></div>
         <div><button class="btn ghost" id="btn-export-council" style="margin-top:14px;border-color:var(--gold);color:var(--gold)">📤 書き出し(PDF/Word/PPT)</button></div>
       </div>
-      <div class="note">「続きを聞く」=議長が全経緯を踏まえ即答(数円・数秒)。「再審議」=これまでの経緯+追加指示を織り込んで三神殿の全工程をやり直し(数十円・数分、書庫に新記録として保存)。「実行指示書」=この審議の結論を、Claude(Pro/Cowork)に貼り付けて実行させるための作業指示書に変換します。継続審議の全経緯は書庫に保存され、書庫の「再開」からいつでも続きを行えます。</div>
+      <div class="note" id="phase4-note">「続きを聞く」=議長が全経緯を踏まえ即答(数円・数秒)。「再審議」=これまでの経緯+追加指示を織り込んで三神殿の全工程をやり直し(数十円・数分、書庫に新記録として保存)。「実行指示書」=この審議の結論を、Claude(Pro/Cowork)に貼り付けて実行させるための作業指示書に変換します。</div>
     </div>
   </section>
 
@@ -874,7 +902,7 @@
 </main>
 
 <input type="file" id="doc-file-input" multiple hidden accept=".docx,.doc,.xlsx,.xls,.xlsm,.pptx,.ppt,.pdf,.md,.txt,.csv,.json,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tif,.tiff,.heic,.heif">
-<footer>CAPITOLINE COUNCIL v2.6 — DIGEST (NEVER FORGET) / SYNC BUGFIX / BACKUP</footer>
+<footer>CAPITOLINE COUNCIL v2.7 — FOCUS MODE / WIDE DIALOGUE / SCROLL HELPERS</footer>
 
 <div id="dg-modal" role="dialog" aria-modal="true">
   <div class="dg-card">
@@ -948,6 +976,7 @@ document.querySelectorAll('nav button').forEach(b=>{
     b.classList.add('active');
     $('screen-'+b.dataset.screen).classList.add('active');
     document.body.setAttribute('data-tab', b.dataset.screen);
+    if(b.dataset.screen !== 'council'){ document.body.classList.remove('focus-council'); }
     if(b.dataset.screen === 'archive') renderArchive();
     if(b.dataset.screen === 'settings') renderLibStatus();
   });
@@ -1969,6 +1998,10 @@ function renderThreadMsg(role, text, isErr){
   div.appendChild(who); div.appendChild(body); box.appendChild(div);
   box.scrollTop = box.scrollHeight;
 }
+function scrollThreadBottomInstant(){
+  const box = $('council-thread');
+  if(box) box.scrollTop = box.scrollHeight;
+}
 function renderThread(){
   const box = $('council-thread');
   box.innerHTML = '';
@@ -1987,16 +2020,24 @@ function resumeSession(id){
   const s = getSessById(id);
   if(!s) return;
   curSessId = id;
+  window.CUR_DIGEST = s.digest || '';
   $('agenda').value = s.agenda;
-  $('ruling-body').textContent = s.ruling || '—';
-  $('rebuttal-body').textContent = s.rebuttal || '—';
-  $('minerva-body').textContent = (s.temples && s.temples.minerva) ? s.temples.minerva.official : '—';
+  renderRich($('ruling-body'), s.ruling || '—');
+  renderRich($('rebuttal-body'), s.rebuttal || '—');
+  renderRich($('minerva-body'), (s.temples && s.temples.minerva) ? s.temples.minerva.official : '—');
   for(const seat of ['jupiter','juno','minerva']){
     const tp = s.temples && s.temples[seat];
     if(tp) renderTempleResult(tp);
   }
   renderThread();
+  updateDigestBadges();
   document.querySelector('nav button[data-screen="council"]').click();
+  /* 再開時は対話の最新が見たいはず → 集中モードにして最下部へ */
+  if(s.thread && s.thread.length > 0){
+    document.body.classList.add('focus-council');
+    $('btn-focus-mode').textContent = '⤡ 通常表示に戻す';
+    setTimeout(scrollThreadBottomInstant, 80);
+  }
 }
 
 function sessFullText(s){
@@ -2160,6 +2201,8 @@ $('btn-council').addEventListener('click', async ()=>{
   /* 再審議時は、それまでの要綱を全神殿に引き継ぐ(決定事項の消失を防ぐ) */
   const prevSess = curSessId && getSessById(curSessId);
   window.CUR_DIGEST = (prevSess && prevSess.digest) ? prevSess.digest : '';
+  document.body.classList.remove('focus-council');
+  $('btn-focus-mode').textContent = '⤢ 集中モード';
   newAbort();
   let wasAborted = false;
   const costStart = monthTotals().total;
@@ -2420,6 +2463,27 @@ $('btn-learn').addEventListener('click', async ()=>{
   }catch(e){ alert('分析に失敗: '+e.message); }
   btn.disabled = false; btn.textContent = '💡この会話を記憶に反映';
 });
+
+/* ===== 継続審議: 集中モード・スクロール補助 ===== */
+$('btn-focus-mode').addEventListener('click', ()=>{
+  const on = document.body.classList.toggle('focus-council');
+  $('btn-focus-mode').textContent = on ? '⤡ 通常表示に戻す' : '⤢ 集中モード';
+  if(on) setTimeout(scrollThreadBottom, 60);
+});
+function scrollThreadBottom(){
+  const box = $('council-thread');
+  if(box) box.scrollTo({top:box.scrollHeight, behavior:'smooth'});
+}
+$('btn-scroll-bottom').addEventListener('click', scrollThreadBottom);
+/* スクロール位置に応じて「最新へ」ボタンを出す */
+(function(){
+  const box = $('council-thread');
+  if(!box) return;
+  box.addEventListener('scroll', ()=>{
+    const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+    $('btn-scroll-bottom').classList.toggle('show', !nearBottom && box.scrollHeight > box.clientHeight + 40);
+  });
+})();
 
 /* ========= 継続審議(PHASE 4) ========= */
 async function contChat(){
