@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Capitoline Council — CapiCo v2.7</title>
+<title>Capitoline Council — CapiCo v2.8</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <!-- PowerPoint生成(JSZipを内包) -->
@@ -380,6 +380,14 @@
   .btn.mic.inline{position:absolute;right:6px;bottom:6px;padding:5px 8px;font-size:15px;opacity:.85}
   .btn.mic.inline:hover{opacity:1}
   .btn.mic.inline.rec{font-size:11px;padding:5px 8px}
+  /* ===== 事実検証の表示 ===== */
+  .msg.sys-note{background:#EEF4FF;border:1px dashed #9DB8E0;color:#2A4A72;font-size:13px;
+    padding:6px 10px;border-radius:5px;margin:6px 0;max-width:100%;text-align:center}
+  .verify-block{background:#F7FBF4;border:1px solid #BFE0C0;border-radius:6px;margin:4px 0 10px;padding:2px 4px}
+  .verify-block summary{cursor:pointer;font-size:13px;font-weight:bold;color:#1E7A3C;padding:6px 8px;user-select:none}
+  .verify-block summary:hover{background:#EAF6EA;border-radius:4px}
+  .verify-inner{padding:4px 10px 10px;font-size:13.5px;line-height:1.55}
+  .verify-inner table.rich-table{font-size:12.5px}
   /* ===== 表・グラフ ===== */
   table.rich-table{border-collapse:collapse;width:auto;min-width:60%;max-width:100%;font-size:13.5px;background:#fff;
     box-shadow:0 1px 4px rgba(0,0,0,.08);margin:6px 0}
@@ -478,7 +486,7 @@
 <header>
   <div class="brand">
     <span class="en">CAPITOLINE COUNCIL</span>
-    <span class="jp">カピトリーノ評議会 — CapiCo v2.7 / Private AI Agents Company</span>
+    <span class="jp">カピトリーノ評議会 — CapiCo v2.8 / Private AI Agents Company</span>
   </div>
   <div class="chair-badge" id="chair-badge">現議長: <b>—</b></div>
   <div class="mem-badge" id="mem-badge">記憶: 未読込</div>
@@ -846,6 +854,7 @@
       <div class="row">
         <div><label class="pin-label"><input type="checkbox" id="wall-toggle">神殿を壁紙にする(全画面に神殿・読み枠は白地黒字)</label></div>
         <div><label class="pin-label"><input type="checkbox" id="chart-toggle" checked>📊 回答に表・グラフを使わせる</label></div>
+        <div><label class="pin-label"><input type="checkbox" id="factcheck-toggle" checked>🔎 事実確認モード(日程・料金・実在などをミネルヴァがWeb検索で裏取り)</label></div>
         <div><label class="pin-label"><input type="checkbox" id="autodigest-toggle" checked>📋 会話が進んだら要綱を自動更新(推奨)</label></div>
         <div><label for="wall-dim">壁紙の明るさ</label>
           <select id="wall-dim"><option value="bright">明るい</option><option value="dim">少し暗い(枠が読みやすい)</option></select>
@@ -902,7 +911,7 @@
 </main>
 
 <input type="file" id="doc-file-input" multiple hidden accept=".docx,.doc,.xlsx,.xls,.xlsm,.pptx,.ppt,.pdf,.md,.txt,.csv,.json,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tif,.tiff,.heic,.heif">
-<footer>CAPITOLINE COUNCIL v2.7 — FOCUS MODE / WIDE DIALOGUE / SCROLL HELPERS</footer>
+<footer>CAPITOLINE COUNCIL v2.8 — FACT-CHECK MODE (ANTI-HALLUCINATION)</footer>
 
 <div id="dg-modal" role="dialog" aria-modal="true">
   <div class="dg-card">
@@ -1914,8 +1923,58 @@ const SEAT_BASE = {
   minerva:'あなたはカピトリーノ評議会(CapiCo)のミネルヴァ(MINERVA)。知恵の女神として他者の意見を見ずに独立検証を行う。'
 };
 function seatSys(seat, withMem){
-  return SEAT_BASE[seat] + (withMem === false ? '' : (memoryContext() + docsContext() + chartRule()));
+  return SEAT_BASE[seat] + (withMem === false ? '' : (memoryContext() + docsContext() + chartRule())) + factCheckRule();
 }
+
+/* ========= 事実確認(ハルシネーション対策) ========= */
+/* 全AIへの共通ルール: 確定事実は推測で言い切らない */
+function factCheckRule(){
+  if(localStorage.getItem('capico_factcheck') === '0') return '';
+  return `\n\n=== 事実確認の鉄則(最重要・違反厳禁) ===
+以下の種類の情報は、記憶や推測で断定してはならない。不確かなら「確認が必要」と明示せよ:
+・日程/期日/開催の有無(イベント・試合・締切など。「◯月◯日に開催」等)
+・料金/価格/無料か有料か/プランの内容
+・サービス・製品・企業・法律・制度が「現在も存在し有効か」(終了・改称・買収・廃止されていないか)
+・統計/数値/ランキング/受賞歴/役職者の氏名
+・最新情報(「現在の」「最新の」で始まる事柄)
+これらを述べる時は、確信度を明示せよ。少しでも不確かなら断定を避け、
+「Web検索での確認を推奨」と自ら申し出よ。古い知識を最新であるかのように語るのは重大な過失である。
+過去に自分が「無料/存在する」と述べたことでも、それが検証されていないなら前提にしてはならない。`;
+}
+
+/* ミネルヴァ(Web検索可)による事実検証。検証対象の主張を渡すと、検証結果を返す */
+async function verifyFacts(draftText, question){
+  const c = getConf();
+  const sys = SEAT_BASE.minerva
+    + ' あなたは事実検証官である。以下の「回答案」に含まれる、客観的に検証可能な事実(日程・料金・サービスや企業の存続・法律・統計・役職者名・製品仕様など)を洗い出し、'
+    + 'Web検索で一つずつ裏を取れ。推測で判断してはならない。必ず検索して確認せよ。';
+  const prompt = `【主宰の質問】\n${question}\n\n【検証対象の回答案】\n${draftText}\n\n`
+    + `=== あなたの仕事 ===\n`
+    + `1. 回答案の中の「検証可能な事実の主張」を具体的に抜き出す(特に日程・料金・無料/有料・サービスや企業の現存・法律・数値)\n`
+    + `2. それぞれをWeb検索で確認する\n`
+    + `3. 次の形式で報告せよ:\n\n`
+    + `## 検証結果\n`
+    + `| 主張 | 判定 | 事実 | 出典 |\n|---|---|---|---|\n`
+    + `| (回答案の主張) | ✅正しい / ❌誤り / ⚠確認不能 | (検索で分かった事実) | (URL/媒体) |\n\n`
+    + `## 総合判定\n`
+    + `(重大な誤りの有無。誤りがあれば何をどう直すべきか具体的に)\n\n`
+    + `検証すべき事実が全く無い場合のみ「検証対象なし」と書け。`;
+  /* ミネルヴァは常にWeb検索ON、標準ティアで */
+  return await callEngine(c.seats.minerva, 'std', sys, [{role:'user', content:prompt}], 2500, true);
+}
+
+/* 検証結果を踏まえて議長が最終回答を作る */
+async function reviseWithVerification(engine, tier, baseSys, question, draft, verification){
+  const sys = baseSys + ' あなたは検証官ミネルヴァの事実確認を受け取った。誤りは必ず訂正し、確認できなかった点は正直に「未確認」と明示して最終回答を作れ。';
+  const prompt = `【主宰の質問】\n${question}\n\n【あなたの回答案】\n${draft}\n\n【検証官ミネルヴァの事実確認】\n${verification}\n\n`
+    + `=== 指示 ===\n検証結果を踏まえ、最終回答を作成せよ。誤りは訂正し、不確かな点は「(未確認)」と添えよ。`
+    + `検証で誤りが見つかった場合は、冒頭に「⚠訂正: 当初〇〇と述べましたが、正しくは△△です」と明記せよ。`
+    + `事実確認で問題がなければ、そのまま自然に回答せよ(検証したことをいちいち書かなくてよい)。`;
+  return await callEngine(engine, tier, sys, [{role:'user', content:prompt}], 2500, false);
+}
+
+/* 事実確認モードが有効か */
+function factCheckOn(){ return localStorage.getItem('capico_factcheck') !== '0'; }
 
 /* ========= 疎通テスト ========= */
 $('btn-test').addEventListener('click', async ()=>{
@@ -1988,6 +2047,13 @@ function sessionContextText(s, maxLen){
 function renderThreadMsg(role, text, isErr){
   const box = $('council-thread');
   const div = document.createElement('div');
+  if(role === 'sys'){
+    div.className = 'msg sys-note';
+    div.textContent = text;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+    return div;
+  }
   div.className = 'msg ' + (role==='user'?'user':'ai');
   const who = document.createElement('div'); who.className = 'who';
   who.textContent = role==='user' ? 'YOU' : 'ユピテル';
@@ -1996,6 +2062,20 @@ function renderThreadMsg(role, text, isErr){
   if(role === 'user' || isErr) body.textContent = text;
   else renderRich(body, text);
   div.appendChild(who); div.appendChild(body); box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+  return div;
+}
+function attachThreadVerification(verification){
+  const box = $('council-thread');
+  const det = document.createElement('details');
+  det.className = 'verify-block';
+  const sum = document.createElement('summary');
+  sum.textContent = '🔎 ミネルヴァの事実検証を見る';
+  det.appendChild(sum);
+  const inner = document.createElement('div'); inner.className = 'verify-inner';
+  renderRich(inner, verification);
+  det.appendChild(inner);
+  box.appendChild(det);
   box.scrollTop = box.scrollHeight;
 }
 function scrollThreadBottomInstant(){
@@ -2348,9 +2428,20 @@ function updateQuickLabel(){
   const lbl = $('quick-model-label');
   if(lbl) lbl.textContent = `${ENGINE_NAME[engine]} / ${c.models[engine][quickTier]}`;
 }
+let LAST_VERIFICATION = '';
+let SYS_MSG_EL = null;
 function renderMsg(role, text, isErr, scrollDown){
   const box = $('chat-box');
   const div = document.createElement('div');
+  if(role === 'sys'){
+    /* 検証中などの一時的な進捗表示 */
+    div.className = 'msg sys-note';
+    div.textContent = text;
+    box.appendChild(div);
+    SYS_MSG_EL = div;
+    box.scrollTop = box.scrollHeight;
+    return div;
+  }
   div.className = 'msg ' + (role==='user'?'user':'ai');
   const who = document.createElement('div'); who.className='who';
   who.textContent = role==='user' ? 'YOU' : 'ユピテル';
@@ -2359,7 +2450,24 @@ function renderMsg(role, text, isErr, scrollDown){
   if(role === 'user' || isErr) body.textContent = text;
   else renderRich(body, text);
   div.appendChild(who); div.appendChild(body); box.appendChild(div);
+  /* 進捗表示が残っていれば消す */
+  if(SYS_MSG_EL){ SYS_MSG_EL.remove(); SYS_MSG_EL = null; }
   if(scrollDown !== false) box.scrollTop = box.scrollHeight;
+}
+/* 検証結果を折りたたみで直前のAI回答に添付 */
+function attachVerification(verification){
+  const box = $('chat-box');
+  const det = document.createElement('details');
+  det.className = 'verify-block';
+  const sum = document.createElement('summary');
+  sum.textContent = '🔎 ミネルヴァの事実検証を見る';
+  det.appendChild(sum);
+  const inner = document.createElement('div');
+  inner.className = 'verify-inner';
+  renderRich(inner, verification);
+  det.appendChild(inner);
+  box.appendChild(det);
+  box.scrollTop = box.scrollHeight;
 }
 async function sendQuick(){
   const inp = $('quick-input');
@@ -2382,10 +2490,30 @@ async function sendQuick(){
   newAbort();
   const costStart = monthTotals().total;
   try{
-    const sys = seatSys('jupiter') + ` 現在の巻物(話題): 「${sc.name}」。主宰の質問に議長として的確に日本語で答えよ。応対ルールを厳守。`;
-    const context = sc.hist.slice(-20);
-    const reply = await callEngine(engine, quickTier, sys, context, 2000, $('web-quick').checked);
+    const sys = seatSys('jupiter') + digestContext(sc.digest) + ` 現在の巻物(話題): 「${sc.name}」。主宰の質問に議長として的確に日本語で答えよ。応対ルールを厳守。`;
+    const context = sc.hist.slice(-40);
+    let reply = await callEngine(engine, quickTier, sys, context, 2000, $('web-quick').checked);
+
+    /* === 事実確認モード: ミネルヴァが裏取り → 議長が修正 === */
+    if(factCheckOn()){
+      const c2 = getConf();
+      if(c2.keys[c2.seats.minerva]){
+        setThrone('minerva','thinking');
+        renderMsg('sys', '🔎 ミネルヴァが事実を検証中…(日程・料金・サービスの実在などをWeb検索で確認)');
+        try{
+          const verification = await verifyFacts(reply, text);
+          if(!/検証対象なし/.test(verification)){
+            setThrone('minerva','done');
+            reply = await reviseWithVerification(engine, quickTier, sys, text, reply, verification);
+            LAST_VERIFICATION = verification;
+          }
+        }catch(ve){
+          renderMsg('sys', '⚠ 事実検証に失敗しました(ミネルヴァのAPIキーやWeb検索を確認)。以下は未検証の回答です。');
+        }
+      }
+    }
     renderMsg('ai', reply);
+    if(LAST_VERIFICATION){ attachVerification(LAST_VERIFICATION); LAST_VERIFICATION=''; }
     setQuickDeity('done');
     const s2 = loadScrolls();
     const sc2 = s2.list.find(x=>x.id===s2.activeId);
@@ -2395,6 +2523,8 @@ async function sendQuick(){
     renderScrollBar();
     const spent = monthTotals().total - costStart;
     $('quick-cost').textContent = `直前の回答コスト: 約¥${spent < 1 ? spent.toFixed(2) : spent.toFixed(1)} /`;
+    updateDigestBadges();
+    maybeAutoDigest('巻物', activeScroll());
   }catch(e){
     setQuickDeity('');
     if(isAbortErr(e)){
@@ -2501,14 +2631,37 @@ async function contChat(){
   const costStart = monthTotals().total;
   try{
     const c = getConf();
-    const sys = seatSys('jupiter') + ' あなたは評議会議長として、完了した審議の継続対話を行う。全経緯を踏まえ、応対ルールを厳守して応答せよ。実行可能な次の一手まで具体的に示すこと。';
+    const sys = seatSys('jupiter') + digestContext(s.digest) + ' あなたは評議会議長として、完了した審議の継続対話を行う。全経緯を踏まえ、応対ルールを厳守して応答せよ。実行可能な次の一手まで具体的に示すこと。';
     const prompt = `これまでの審議の全記録:\n${sessionContextText(s)}\n\n主宰の新しい発言:\n${text}\n\n議長として応答せよ。`;
-    const reply = await callEngine(c.seats.jupiter, 'std', sys, [{role:'user',content:prompt}], 2500, $('web-council').checked);
+    let reply = await callEngine(c.seats.jupiter, 'std', sys, [{role:'user',content:prompt}], 2500, $('web-council').checked);
+
+    /* 事実確認 */
+    if(factCheckOn() && c.keys[c.seats.minerva]){
+      const note = renderThreadMsg('sys', '🔎 ミネルヴァが事実を検証中…');
+      try{
+        const verification = await verifyFacts(reply, text);
+        if(!/検証対象なし/.test(verification)){
+          reply = await reviseWithVerification(c.seats.jupiter, 'std', sys, text, reply, verification);
+          if(note) note.remove();
+          s.thread.push({role:'assistant', content:reply});
+          updateSessObj(s);
+          renderThreadMsg('ai', reply);
+          attachThreadVerification(verification);
+          const spent0 = monthTotals().total - costStart;
+          $('session-cost').textContent = `直前の応答コスト: 約¥${spent0 < 1 ? spent0.toFixed(1) : Math.round(spent0)}`;
+          updateDigestBadges(); maybeAutoDigest('評議会', getSessById(curSessId));
+          btn.disabled = false; btn.textContent = '続きを聞く(議長対話)';
+          return;
+        }
+        if(note) note.remove();
+      }catch(ve){ if(note) note.remove(); }
+    }
     s.thread.push({role:'assistant', content:reply});
     updateSessObj(s);
     renderThreadMsg('ai', reply);
     const spent = monthTotals().total - costStart;
     $('session-cost').textContent = `直前の応答コスト: 約¥${spent < 1 ? spent.toFixed(1) : Math.round(spent)}`;
+    updateDigestBadges(); maybeAutoDigest('評議会', getSessById(curSessId));
   }catch(e){ renderThreadMsg('ai', e.message, true); }
   btn.disabled = false; btn.textContent = '続きを聞く(議長対話)';
 }
@@ -3537,6 +3690,10 @@ function applyWallpaper(){
 $('autodigest-toggle').checked = localStorage.getItem('capico_autodigest') !== '0';
 $('autodigest-toggle').addEventListener('change', ()=>{
   localStorage.setItem('capico_autodigest', $('autodigest-toggle').checked ? '1' : '0');
+});
+$('factcheck-toggle').checked = localStorage.getItem('capico_factcheck') !== '0';
+$('factcheck-toggle').addEventListener('change', ()=>{
+  localStorage.setItem('capico_factcheck', $('factcheck-toggle').checked ? '1' : '0');
 });
 $('chart-toggle').checked = localStorage.getItem('capico_chart') !== '0';
 $('chart-toggle').addEventListener('change', ()=>{
