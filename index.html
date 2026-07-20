@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Capitoline Council — CapiCo v3.1</title>
+<title>Capitoline Council — CapiCo v3.2</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <!-- PowerPoint生成(JSZipを内包) -->
@@ -493,7 +493,7 @@
 <header>
   <div class="brand">
     <span class="en">CAPITOLINE COUNCIL</span>
-    <span class="jp">カピトリーノ評議会 — CapiCo v3.1 / Private AI Agents Company</span>
+    <span class="jp">カピトリーノ評議会 — CapiCo v3.2 / Private AI Agents Company</span>
   </div>
   <div class="chair-badge" id="chair-badge">現議長: <b>—</b></div>
   <div class="mem-badge" id="mem-badge">記憶: 未読込</div>
@@ -926,7 +926,7 @@
 </main>
 
 <input type="file" id="doc-file-input" multiple hidden accept=".docx,.doc,.xlsx,.xls,.xlsm,.pptx,.ppt,.pdf,.md,.txt,.csv,.json,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tif,.tiff,.heic,.heif">
-<footer>CAPITOLINE COUNCIL v3.1 — WEB SEARCH (ALL 3) + URL READING</footer>
+<footer>CAPITOLINE COUNCIL v3.2 — COUNCIL WEB SEARCH + URL FIX</footer>
 
 <div id="dg-modal" role="dialog" aria-modal="true">
   <div class="dg-card">
@@ -2088,16 +2088,15 @@ function seatSys(seat, withMem){
 /* 全AIへの共通ルール: 確定事実は推測で言い切らない */
 function factCheckRule(){
   if(localStorage.getItem('capico_factcheck') === '0') return '';
-  return `\n\n=== 事実確認の鉄則(最重要・違反厳禁) ===
-以下の種類の情報は、記憶や推測で断定してはならない。不確かなら「確認が必要」と明示せよ:
-・日程/期日/開催の有無(イベント・試合・締切など。「◯月◯日に開催」等)
-・料金/価格/無料か有料か/プランの内容
-・サービス・製品・企業・法律・制度が「現在も存在し有効か」(終了・改称・買収・廃止されていないか)
-・統計/数値/ランキング/受賞歴/役職者の氏名
-・最新情報(「現在の」「最新の」で始まる事柄)
-これらを述べる時は、確信度を明示せよ。少しでも不確かなら断定を避け、
-「Web検索での確認を推奨」と自ら申し出よ。古い知識を最新であるかのように語るのは重大な過失である。
-過去に自分が「無料/存在する」と述べたことでも、それが検証されていないなら前提にしてはならない。`;
+  return `\n\n=== 事実確認の鉄則(最重要) ===
+【あなたにWeb検索ツールが与えられている場合】
+日程・料金・サービスや企業の存続・法律・統計・最新情報など、客観的に検証可能な事実は、
+記憶に頼らず必ずWeb検索で確認してから述べよ。検索で確認した事実は、出典を添えて自信を持って断定してよい。
+「自分はURLを読めない」「リアルタイム検索はできない」等と最初から諦める発言は禁止する。
+実際にツールが与えられているので、まず使え。参照ページの内容が文脈に添付されている場合は、それを一次情報として活用せよ。
+【検索ツールが無い/検索しても確認できない場合のみ】
+その事実は「(要確認)」と明示し、断定を避けよ。過去に自分が述べたことでも、未検証なら前提にしてはならない。
+古い知識を最新であるかのように語ることは重大な過失である。`;
 }
 
 /* ミネルヴァ(Web検索可)による事実検証。検証対象の主張を渡すと、検証結果を返す */
@@ -2348,10 +2347,18 @@ function addAgentChip(templeEl, name){
   templeEl.querySelector('.agents').appendChild(chip);
   return chip;
 }
-async function templeMeeting(seat, agenda, tiers, agentCountSetting, onUpdate, useWeb){
+async function templeMeeting(seat, agenda, tiers, agentCountSetting, onUpdate, useWeb, urlCtx){
   const c = getConf();
   const engine = c.seats[seat];
   const deity = DEITY[seat];
+  /* ChatGPTは検索非対応のため、事実確認はせず批判・リスク指摘に専念させる */
+  const isSearchless = (engine === 'gpt');
+  const roleNote = isSearchless
+    ? ' なお、あなた(ChatGPT)は最新情報の検索を担当しない。事実の確認は検索担当のミネルヴァに委ね、あなたは論理の穴・リスク・見落としの指摘に集中せよ。'
+    : '';
+  const searchNote = (useWeb && !isSearchless)
+    ? ' あなたにはWeb検索ツールがある。日程・数値・料金・最新情報などの事実は必ず検索で確認してから述べよ。「検索できない」と諦めるな。'
+    : '';
   const countRule = agentCountSetting === 'auto' ? '3〜5名(議題の複雑さに応じてあなたが決める)' : agentCountSetting + '名ちょうど';
   onUpdate('招集中');
   const rosterSys = seatSys(seat) + (window.CUR_DIGEST ? digestContext(window.CUR_DIGEST) : '')
@@ -2367,15 +2374,15 @@ async function templeMeeting(seat, agenda, tiers, agentCountSetting, onUpdate, u
   onUpdate('内部討議中');
   const opinions = await Promise.all(roster.map(async (a, i)=>{
     const sys = `あなたは${deity}神殿(カピトリーノ評議会)所属のsubagent「${a.role}」。担当論点: ${a.focus}。自分の専門的立場からのみ意見を述べよ。`
+      + roleNote + searchNote
       + memoryContext() + docsContext() + (window.CUR_DIGEST ? digestContext(window.CUR_DIGEST) : '');
-    const prompt = `議題:\n${agenda}\n\nあなたの立場からの意見を述べよ。${useWeb?'必要ならWeb検索で最新情報を確認し、検索した場合は根拠に情報源を一言添えよ。':''}形式: 【結論】一文 →【根拠】→【懸念・条件】。400字以内。`;
+    const prompt = `議題:\n${agenda}${urlCtx||''}\n\nあなたの立場からの意見を述べよ。${(useWeb && !isSearchless)?'事実(日程・数値・料金・最新情報)は必ずWeb検索で確認し、出典を一言添えよ。':''}形式: 【結論】一文 →【根拠】→【懸念・条件】。400字以内。`;
     try{
       const op = await callEngine(engine, tiers.sub, sys, [{role:'user',content:prompt}], 700, useWeb);
       chips[i].classList.remove('think'); chips[i].classList.add('done');
       chips[i].dataset.opinion = op;
       return {role:a.role, opinion:op};
     }catch(e){
-      /* 自己回復: 3秒待って同一エンジンで再挑戦 */
       try{
         await sleep(3000);
         const op2 = await callEngine(engine, tiers.sub, sys, [{role:'user',content:prompt}], 700, useWeb);
@@ -2383,10 +2390,9 @@ async function templeMeeting(seat, agenda, tiers, agentCountSetting, onUpdate, u
         chips[i].dataset.opinion = op2;
         return {role:a.role, opinion:op2};
       }catch(e2){
-        /* 最終手段: Claudeが代打(記録に明示) */
         if(engine !== 'claude' && getConf().keys.claude){
           try{
-            const op3 = await callEngine('claude', 'eco', sys, [{role:'user',content:prompt}], 700, false);
+            const op3 = await callEngine('claude', 'eco', sys, [{role:'user',content:prompt}], 700, useWeb);
             chips[i].classList.remove('think'); chips[i].classList.add('done');
             chips[i].textContent = a.role + '(代打C)';
             chips[i].dataset.opinion = '※本来の担当AIが応答不能のためClaudeが代打\n' + op3;
@@ -2402,9 +2408,9 @@ async function templeMeeting(seat, agenda, tiers, agentCountSetting, onUpdate, u
   onUpdate('見解統合中');
   const failedCount = opinions.filter(o=>o.failed).length;
   const joined = opinions.map(o=>`■${o.role}\n${o.opinion}`).join('\n\n');
-  const intSys = seatSys(seat) + ` あなたは${deity}神殿の長として、部下の意見を統合し神殿の公式見解をまとめる。` + (failedCount>0 ? ` 注意: ${failedCount}名のsubagentが技術障害で応答できていない。その視点の欠落を公式見解に明記せよ。` : '');
-  const intPrompt = `議題:\n${agenda}\n\n部下の意見:\n${joined}\n\n公式見解をまとめよ。重要な異論は必ず少数意見として残せ。次のJSONのみ出力:\n{"official":"公式見解(500字以内)","minority":"少数意見の要旨(なければ空文字)"}`;
-  const intText = await callEngine(engine, tiers.chief, intSys, [{role:'user',content:intPrompt}], 1200);
+  const intSys = seatSys(seat) + ` あなたは${deity}神殿の長として、部下の意見を統合し神殿の公式見解をまとめる。` + searchNote + (failedCount>0 ? ` 注意: ${failedCount}名のsubagentが技術障害で応答できていない。その視点の欠落を公式見解に明記せよ。` : '');
+  const intPrompt = `議題:\n${agenda}${urlCtx||''}\n\n部下の意見:\n${joined}\n\n公式見解をまとめよ。重要な異論は必ず少数意見として残せ。次のJSONのみ出力:\n{"official":"公式見解(500字以内)","minority":"少数意見の要旨(なければ空文字)"}`;
+  const intText = await callEngine(engine, tiers.chief, intSys, [{role:'user',content:intPrompt}], 1200, useWeb);
   let integrated;
   try{ integrated = parseJSONLoose(intText); }
   catch(e){ integrated = {official:intText, minority:''}; }
@@ -2445,6 +2451,12 @@ $('btn-council').addEventListener('click', async ()=>{
   newAbort();
   let wasAborted = false;
   const costStart = monthTotals().total;
+  /* 議題にURLがあればページ内容を読み込んで全神殿に渡す */
+  let urlCtx = '';
+  if(typeof extractUrls === 'function' && extractUrls(agenda).length > 0){
+    $('ruling-body').textContent = '🔗 議題に含まれるURLを読み込み中…';
+    try{ urlCtx = await urlContext(agenda); }catch(e){}
+  }
   document.querySelectorAll('#council-pillars .pillar').forEach(p=>{
     p.classList.remove('testing','ok','ng');
     p.querySelector('.status').textContent = '待機';
@@ -2468,7 +2480,7 @@ $('btn-council').addEventListener('click', async ()=>{
       const r = await templeMeeting(seat, agenda, tiers, agentCount,
         (st)=>{ pel.querySelector('.status').textContent = st;
           if(st==='見解統合中') setThrone(seat,'speaking'); },
-        $('web-council').checked);
+        $('web-council').checked, urlCtx);
       results[seat] = r;
       pel.classList.remove('testing'); pel.classList.add('ok');
       pel.querySelector('.status').textContent = '見解確定';
@@ -2509,8 +2521,8 @@ $('btn-council').addEventListener('click', async ()=>{
     try{
       setThrone('juno','speaking');
       $('rebuttal-body').textContent = '反論書を作成中…';
-      const sys = seatSys('juno') + ' あなたはユーノー神殿の長。ユピテル神殿の見解への反論書を作成する。';
-      const prompt = `議題:\n${agenda}\n\nユピテル神殿の公式見解:\n${results.jupiter.official}\n\n自神殿の審議結果:\n${results.juno.official}\n\nユピテル見解の弱点・リスク・見落としを列挙する反論書を作成せよ。600字以内。`;
+      const sys = seatSys('juno') + ' あなたはユーノー神殿の長。ユピテル神殿の見解への反論書を作成する。事実確認は検索担当の他神に委ね、あなたは論理の穴・リスク・見落としの指摘に集中せよ。';
+      const prompt = `議題:\n${agenda}${urlCtx||''}\n\nユピテル神殿の公式見解:\n${results.jupiter.official}\n\n自神殿の審議結果:\n${results.juno.official}\n\nユピテル見解の弱点・リスク・見落としを列挙する反論書を作成せよ。600字以内。`;
       rebuttal = await callEngine(c.seats.juno, tiers.chief, sys, [{role:'user',content:prompt}], 1200);
       renderRich($('rebuttal-body'), rebuttal);
     }catch(e){ rebuttal = '(反論書の作成に失敗)'; $('rebuttal-body').textContent = rebuttal; }
@@ -2524,10 +2536,11 @@ $('btn-council').addEventListener('click', async ()=>{
     const minorities = ['jupiter','juno','minerva']
       .filter(s=>results[s] && results[s].minority)
       .map(s=>`【${DEITY[s]}神殿の少数意見】${results[s].minority}`).join('\n');
-    const sys = seatSys('jupiter') + ' あなたは評議会議長として最終裁定を下す。反論と少数意見を握り潰してはならない。';
-    const prompt = `議題:\n${agenda}\n\n【ユピテル神殿 公式見解】\n${results.jupiter ? results.jupiter.official : '(欠席)'}\n\n【ユーノー反論書】\n${rebuttal}\n\n【ミネルヴァ独立見解】\n${results.minerva ? results.minerva.official : '(欠席)'}\n\n${minorities ? '【各神殿の少数意見】\n'+minorities+'\n' : ''}\n全てを踏まえ最終裁定を下せ。形式:\n【裁定】\n【根拠】\n【反論への応答】\n【残存リスクと条件】\n【推奨アクション】番号付き\n【付記・少数意見】`;
+    const sys = seatSys('jupiter') + ' あなたは評議会議長として最終裁定を下す。反論と少数意見を握り潰してはならない。事実に不確かな点があればWeb検索で確認してから裁定せよ。';
+    const prompt = `議題:\n${agenda}${urlCtx||''}\n\n【ユピテル神殿 公式見解】\n${results.jupiter ? results.jupiter.official : '(欠席)'}\n\n【ユーノー反論書】\n${rebuttal}\n\n【ミネルヴァ独立見解】\n${results.minerva ? results.minerva.official : '(欠席)'}\n\n${minorities ? '【各神殿の少数意見】\n'+minorities+'\n' : ''}\n全てを踏まえ最終裁定を下せ。形式:\n【裁定】\n【根拠】\n【反論への応答】\n【残存リスクと条件】\n【推奨アクション】番号付き\n【付記・少数意見】`;
     const engine2 = results.jupiter ? c.seats.jupiter : (results.minerva ? c.seats.minerva : c.seats.juno);
-    const ruling = await callEngine(engine2, tiers.chief, sys, [{role:'user',content:prompt}], 2500);
+    const useWebRuling = $('web-council').checked && engine2 !== 'gpt';
+    const ruling = await callEngine(engine2, tiers.chief, sys, [{role:'user',content:prompt}], 2500, useWebRuling);
     renderRich($('ruling-body'), ruling);
     const spent = monthTotals().total - costStart;
     const anyFail = ['jupiter','juno','minerva'].some(st=>results[st] && results[st].opinions && results[st].opinions.some(o=>o.failed));
