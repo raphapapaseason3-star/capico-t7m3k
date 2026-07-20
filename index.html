@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Capitoline Council — CapiCo v3.0</title>
+<title>Capitoline Council — CapiCo v3.1</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <!-- PowerPoint生成(JSZipを内包) -->
@@ -493,7 +493,7 @@
 <header>
   <div class="brand">
     <span class="en">CAPITOLINE COUNCIL</span>
-    <span class="jp">カピトリーノ評議会 — CapiCo v3.0 / Private AI Agents Company</span>
+    <span class="jp">カピトリーノ評議会 — CapiCo v3.1 / Private AI Agents Company</span>
   </div>
   <div class="chair-badge" id="chair-badge">現議長: <b>—</b></div>
   <div class="mem-badge" id="mem-badge">記憶: 未読込</div>
@@ -552,7 +552,7 @@
       <button class="tier" data-tier="eco">省エネ</button>
       <button class="tier active" data-tier="std">標準</button>
       <button class="tier" data-tier="max">最高出力</button>
-      <label class="pin-label" style="margin-left:8px"><input type="checkbox" id="web-quick">🌐Web検索</label>
+      <label class="pin-label" style="margin-left:8px"><input type="checkbox" id="web-quick">🌐Web検索(最新情報・URL閲覧)</label>
       <span id="quick-model-label" style="margin-left:auto;font-family:var(--mono);font-size:12px"></span>
     </div>
     <div class="chat-box" id="chat-box"></div>
@@ -623,7 +623,7 @@
         </div>
         <div>
           <label>最新情報</label>
-          <label class="pin-label" style="margin-top:10px"><input type="checkbox" id="web-council">🌐 ミネルヴァ神殿がWeb検索して検証</label>
+          <label class="pin-label" style="margin-top:10px"><input type="checkbox" id="web-council">🌐 三神殿がWeb検索でリアルタイム情報を参照</label>
         </div>
       </div>
       <button class="btn gold" id="btn-council">評議会を招集する</button>
@@ -899,6 +899,7 @@
       <label for="key-gpt" style="margin-top:20px">OpenAI APIキー</label>
       <div class="keyrow"><input type="password" id="key-gpt" placeholder="sk-..."><button class="btn ghost" data-toggle="key-gpt">表示</button></div>
       <div class="row">
+        <div><label>Web検索用</label><input type="text" id="m-gpt-search" value="gpt-4o-search-preview"></div>
         <div><label>省エネ</label><input type="text" id="m-gpt-eco" value="gpt-5-mini"></div>
         <div><label>標準</label><input type="text" id="m-gpt-std" value="gpt-5.1"></div>
         <div><label>最高出力</label><input type="text" id="m-gpt-max" value="gpt-5.1"></div>
@@ -925,7 +926,7 @@
 </main>
 
 <input type="file" id="doc-file-input" multiple hidden accept=".docx,.doc,.xlsx,.xls,.xlsm,.pptx,.ppt,.pdf,.md,.txt,.csv,.json,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tif,.tiff,.heic,.heif">
-<footer>CAPITOLINE COUNCIL v3.0 — SCROLL PICKER IN COUNCIL / AI CATEGORY</footer>
+<footer>CAPITOLINE COUNCIL v3.1 — WEB SEARCH (ALL 3) + URL READING</footer>
 
 <div id="dg-modal" role="dialog" aria-modal="true">
   <div class="dg-card">
@@ -1288,7 +1289,7 @@ function defaults(){
     keys:{claude:'', gpt:'', gemini:''},
     models:{
       claude:{eco:'claude-haiku-4-5-20251001', std:'claude-sonnet-4-6', max:'claude-opus-4-8'},
-      gpt:{eco:'gpt-5-mini', std:'gpt-5.1', max:'gpt-5.1'},
+      gpt:{eco:'gpt-5-mini', std:'gpt-5.1', max:'gpt-5.1', search:'gpt-4o-search-preview'},
       gemini:{eco:'gemini-2.5-flash-lite', std:'gemini-2.5-flash', max:'gemini-2.5-flash'}
     },
     prices:{
@@ -1806,6 +1807,7 @@ function fillForm(){
   $('seat-jupiter').value = c.seats.jupiter; $('seat-juno').value = c.seats.juno; $('seat-minerva').value = c.seats.minerva;
   $('key-claude').value = c.keys.claude; $('key-gpt').value = c.keys.gpt; $('key-gemini').value = c.keys.gemini;
   for(const e of ['claude','gpt','gemini']) for(const t of ['eco','std','max']) $(`m-${e}-${t}`).value = c.models[e][t];
+  if($('m-gpt-search')) $('m-gpt-search').value = (c.models.gpt && c.models.gpt.search) || 'gpt-4o-search-preview';
   $('fx-rate').value = c.fx; $('cap-yen').value = c.capYen;
   $('gh-token').value = c.sync.ghToken; $('gist-id').value = c.sync.gistId; $('mem-pass').value = c.sync.pass;
   buildPriceUI(); refreshSeatsUI(c); renderUsage(); buildMemUI(); refreshMemBadge();
@@ -1851,6 +1853,8 @@ $('btn-save').addEventListener('click',()=>{
     c.prices[e] = {};
     for(const t of ['eco','std','max']) c.prices[e][t] = {i: parseFloat($(`p-${e}-${t}-i`).value)||0, o: parseFloat($(`p-${e}-${t}-o`).value)||0};
   }
+  /* GPTのWeb検索用モデル */
+  const gse = $('m-gpt-search'); if(gse) c.models.gpt.search = gse.value.trim() || 'gpt-4o-search-preview';
   localStorage.setItem(CONF_KEY, JSON.stringify(c));
   $('saved-msg').textContent = '保存しました';
   setTimeout(()=> $('saved-msg').textContent = '', 4000);
@@ -1976,11 +1980,21 @@ async function callEngineRaw(engine, tier, systemText, messages, maxTokens, web)
   }
   if(engine === 'gpt'){
     return withRetry(async ()=>{
+      /* Web検索ON時は検索対応モデルに切替(gpt-4o-search-preview系) */
+      let useModel = model;
+      const reqBody = {messages:[{role:'system',content:systemText}, ...messages]};
+      if(web){
+        useModel = c.models.gpt.search || 'gpt-4o-search-preview';
+        reqBody.web_search_options = {search_context_size:'medium'};
+        /* 検索モデルはmax_completion_tokens/temperature非対応のことがあるため付けない */
+      }else{
+        reqBody.max_completion_tokens = maxTokens||1500;
+      }
+      reqBody.model = useModel;
       const res = await fetch('https://api.openai.com/v1/chat/completions',{
         method:'POST', signal: abortSignal(),
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-        body: JSON.stringify({model, max_completion_tokens:maxTokens||1500,
-          messages:[{role:'system',content:systemText}, ...messages]})
+        body: JSON.stringify(reqBody)
       });
       const data = await res.json();
       if(!res.ok) throw apiErr(res.status, data?.error?.message);
@@ -2017,6 +2031,47 @@ function parseJSONLoose(text){
   const s = t.indexOf('{'); const e2 = t.lastIndexOf('}');
   if(s >= 0 && e2 > s) t = t.slice(s, e2+1);
   return JSON.parse(t);
+}
+
+/* ========= URL閲覧(ページ内容の読み取り) ========= */
+function extractUrls(text){
+  const re = /https?:\/\/[^\s<>"'）」]+/g;
+  return (String(text||'').match(re) || []).slice(0, 3); /* 最大3URL */
+}
+/* CORS制約を回避してページ本文を取得(複数プロキシをフォールバック) */
+async function fetchPageText(url){
+  const proxies = [
+    u => 'https://r.jina.ai/' + u,                                   /* 本文抽出に最適 */
+    u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u)
+  ];
+  for(const mk of proxies){
+    try{
+      const res = await fetch(mk(url), {signal: abortSignal()});
+      if(!res.ok) continue;
+      let txt = await res.text();
+      /* HTMLならタグを大まかに除去 */
+      if(/^\s*<(!doctype|html)/i.test(txt)){
+        txt = txt.replace(/<script[\s\S]*?<\/script>/gi,' ')
+                 .replace(/<style[\s\S]*?<\/style>/gi,' ')
+                 .replace(/<[^>]+>/g,' ').replace(/\s+/g,' ');
+      }
+      txt = txt.trim();
+      if(txt.length > 100) return txt.slice(0, 6000); /* 6000字まで */
+    }catch(e){ /* 次のプロキシへ */ }
+  }
+  return null;
+}
+/* メッセージ内のURLを読んで文脈テキストを作る */
+async function urlContext(text){
+  const urls = extractUrls(text);
+  if(urls.length === 0) return '';
+  let ctx = '';
+  for(const u of urls){
+    const body = await fetchPageText(u);
+    if(body) ctx += `\n\n=== 参照ページ(${u})の内容 ===\n${body}\n=== ページ内容ここまで ===`;
+    else ctx += `\n\n(※ ${u} は読み取れませんでした。アクセス制限がある可能性があります)`;
+  }
+  return ctx;
 }
 
 /* ========= 席のシステムプロンプト ========= */
@@ -2413,7 +2468,7 @@ $('btn-council').addEventListener('click', async ()=>{
       const r = await templeMeeting(seat, agenda, tiers, agentCount,
         (st)=>{ pel.querySelector('.status').textContent = st;
           if(st==='見解統合中') setThrone(seat,'speaking'); },
-        seat==='minerva' && $('web-council').checked);
+        $('web-council').checked);
       results[seat] = r;
       pel.classList.remove('testing'); pel.classList.add('ok');
       pel.querySelector('.status').textContent = '見解確定';
@@ -2597,7 +2652,17 @@ async function sendQuick(){
   const costStart = monthTotals().total;
   try{
     const sys = seatSys('jupiter') + digestContext(sc.digest) + ` 現在の巻物(話題): 「${sc.name}」。主宰の質問に議長として的確に日本語で答えよ。応対ルールを厳守。`;
+    /* メッセージにURLがあればページ内容を読み取って添付 */
+    let urlCtx = '';
+    if(extractUrls(text).length > 0){
+      renderMsg('sys', '🔗 貼られたURLのページを読み込み中…');
+      urlCtx = await urlContext(text);
+    }
     const context = sc.hist.slice(-40);
+    if(urlCtx){
+      /* 最後のユーザー発言にページ内容を付加 */
+      context[context.length-1] = {role:'user', content: text + urlCtx};
+    }
     let reply = await callEngine(engine, quickTier, sys, context, 2000, $('web-quick').checked);
 
     /* === 事実確認モード: ミネルヴァが裏取り → 議長が修正 === */
@@ -3753,7 +3818,8 @@ $('dg-copy').addEventListener('click', async ()=>{
 /* ========= 起動時 ========= */
 ['web-quick','web-council'].forEach(id=>{
   const el = $(id);
-  el.checked = localStorage.getItem('capico_'+id) === '1';
+  /* デフォルトON(明示的にOFFにした場合のみOFF) */
+  el.checked = localStorage.getItem('capico_'+id) !== '0';
   el.addEventListener('change', ()=> localStorage.setItem('capico_'+id, el.checked ? '1' : '0'));
 });
 /* テーマ初期化&配線 */
