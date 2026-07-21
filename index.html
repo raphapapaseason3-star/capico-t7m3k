@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Capitoline Council — CapiCo v3.2</title>
+<title>Capitoline Council — CapiCo v3.7</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <!-- PowerPoint生成(JSZipを内包) -->
@@ -387,6 +387,44 @@
   .council-scroll-row select{flex:1;min-width:160px;font-size:15px;padding:8px 10px}
   .council-scroll-row .btn{margin:0;padding:8px 12px;font-size:13px;white-space:nowrap}
   #btn-council-suggest{border-color:var(--gold);color:var(--gold)}
+  /* ===== 投稿用記事ツール ===== */
+  .article-tools{background:#FFF9EC;border:2px solid var(--gold);border-radius:8px;padding:12px 14px;margin:8px 0 12px}
+  .at-head{font-weight:bold;color:var(--gold);font-size:14px;margin-bottom:8px}
+  .at-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0}
+  .at-label{font-size:13px;color:var(--ink-dim);font-weight:bold;min-width:38px}
+  .at-title{font-size:15px;font-weight:bold;color:var(--ink);flex:1;min-width:120px}
+  .at-note{font-size:12px;color:var(--ink-dim);margin:6px 0;line-height:1.5}
+  .at-imgsec{margin-top:10px;border-top:1px dashed var(--edge);padding-top:10px}
+  .free-img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-top:8px}
+  .fimg{position:relative;border-radius:6px;overflow:hidden;cursor:pointer;border:3px solid #ccc;aspect-ratio:4/3;background:#eee}
+  .fimg img{width:100%;height:100%;object-fit:cover;display:block}
+  .fimg-lic{position:absolute;left:0;bottom:0;right:0;font-size:10px;background:rgba(0,0,0,.6);color:#fff;padding:2px 4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fimg-green{border-color:#2E9E4F}
+  .fimg-gold{border-color:#C9A227}
+  .fimg-red{border-color:#C4364F}
+  .fimg-gray{border-color:#999}
+  .fimg:hover{filter:brightness(1.05);transform:scale(1.02);transition:.15s}
+  .fimg-detail{font-size:15px;line-height:1.7}
+  .fid-row{margin:8px 0}
+  .fid-tier{margin-left:8px;font-weight:bold}
+  .fimg-detail.fimg-green .fid-tier{color:#2E9E4F}
+  .fimg-detail.fimg-gold .fid-tier{color:#B8901E}
+  .fimg-detail.fimg-red .fid-tier{color:#C4364F}
+  .fid-credit{background:#F3EFE2;border:1px solid var(--edge);border-radius:5px;padding:8px 10px;font-size:13px;
+    font-family:var(--mono);word-break:break-all;margin:4px 0}
+  .fid-actions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  /* ===== 記事プレビュー ===== */
+  .at-preview{background:#fff;border:1px solid var(--edge);border-radius:6px;padding:12px 14px;
+    margin:4px 0 8px;max-height:340px;overflow-y:auto;font-size:14px;line-height:1.7}
+  .at-preview .at-preview-img{margin:8px 0}
+  .at-preview .at-preview-img img{max-width:100%;height:auto;border-radius:6px;display:block}
+  .at-preview .at-preview-img figcaption{font-size:11px;color:var(--ink-dim);margin-top:3px}
+  .at-preview table.rich-table{font-size:12px}
+  /* ===== メッセージのコピーボタン ===== */
+  .msg-actions{display:flex;gap:6px;margin-top:5px;flex-wrap:wrap}
+  .msg-copy-btn{background:#fff;border:1px solid var(--gold);color:var(--gold);
+    border-radius:5px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:bold}
+  .msg-copy-btn:hover{background:var(--gold-soft)}
   /* ===== 事実検証の表示 ===== */
   .msg.sys-note{background:#EEF4FF;border:1px dashed #9DB8E0;color:#2A4A72;font-size:13px;
     padding:6px 10px;border-radius:5px;margin:6px 0;max-width:100%;text-align:center}
@@ -475,17 +513,22 @@
     @page{margin:9mm}
   }
   #print-area{display:none}
-  #viewer{position:fixed;inset:0;background:rgba(42,46,56,.55);display:none;z-index:100;padding:3vh 3vw}  #viewer.open{display:flex;align-items:center;justify-content:center}
-  .viewer-card{background:#FFFDF6;border:2px solid var(--gold);border-radius:8px;width:min(900px,96vw);
-    max-height:92vh;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.3)}
-  .viewer-head{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--edge)}
+  #viewer{position:fixed;inset:0;background:rgba(42,46,56,.62);display:none;z-index:100;padding:1.5vh 1.5vw}
+  #viewer.open{display:flex;align-items:center;justify-content:center}
+  .viewer-card{background:#FFFDF6;border:2px solid var(--gold);border-radius:8px;width:min(1100px,97vw);
+    height:97vh;max-height:97vh;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+  .viewer-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--edge);flex-shrink:0}
   .viewer-head .vtitle{font-size:15px;font-weight:bold;color:var(--gold);flex:1;min-width:0;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .viewer-head button{background:#fff;border:1px solid var(--edge);border-radius:4px;cursor:pointer;
     font-size:15px;padding:6px 14px;color:var(--ink)}
   .viewer-head .vclose{border-color:var(--ng);color:var(--ng);font-weight:bold}
-  .viewer-body{padding:20px 26px;overflow-y:auto;font-size:20px;line-height:2.1;
-    white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+  .viewer-body{padding:22px 30px;overflow-y:auto;font-size:20px;line-height:1.9;
+    word-break:break-word;color:var(--ink);flex:1}
+  .viewer-body > div{white-space:pre-wrap}
+  .viewer-body table.rich-table{font-size:0.85em;white-space:normal;margin:14px 0}
+  .viewer-body .rich-chart{height:340px;white-space:normal;margin:16px 0}
+  .viewer-body img{max-width:100%;height:auto;border-radius:6px;margin:10px 0}
 </style>
 </head>
 <body>
@@ -493,7 +536,7 @@
 <header>
   <div class="brand">
     <span class="en">CAPITOLINE COUNCIL</span>
-    <span class="jp">カピトリーノ評議会 — CapiCo v3.2 / Private AI Agents Company</span>
+    <span class="jp">カピトリーノ評議会 — CapiCo v3.7 / Private AI Agents Company</span>
   </div>
   <div class="chair-badge" id="chair-badge">現議長: <b>—</b></div>
   <div class="mem-badge" id="mem-badge">記憶: 未読込</div>
@@ -552,7 +595,7 @@
       <button class="tier" data-tier="eco">省エネ</button>
       <button class="tier active" data-tier="std">標準</button>
       <button class="tier" data-tier="max">最高出力</button>
-      <label class="pin-label" style="margin-left:8px"><input type="checkbox" id="web-quick">🌐Web検索(最新情報・URL閲覧)</label>
+      <label class="pin-label" style="margin-left:8px"><input type="checkbox" id="web-quick">🌐Web検索(最新情報・URL閲覧 ※議長がClaude/Geminiの時)</label>
       <span id="quick-model-label" style="margin-left:auto;font-family:var(--mono);font-size:12px"></span>
     </div>
     <div class="chat-box" id="chat-box"></div>
@@ -623,7 +666,7 @@
         </div>
         <div>
           <label>最新情報</label>
-          <label class="pin-label" style="margin-top:10px"><input type="checkbox" id="web-council">🌐 三神殿がWeb検索でリアルタイム情報を参照</label>
+          <label class="pin-label" style="margin-top:10px"><input type="checkbox" id="web-council">🌐 Web検索でリアルタイム情報を参照(ユピテル・ミネルヴァが担当)</label>
         </div>
       </div>
       <button class="btn gold" id="btn-council">評議会を招集する</button>
@@ -899,7 +942,6 @@
       <label for="key-gpt" style="margin-top:20px">OpenAI APIキー</label>
       <div class="keyrow"><input type="password" id="key-gpt" placeholder="sk-..."><button class="btn ghost" data-toggle="key-gpt">表示</button></div>
       <div class="row">
-        <div><label>Web検索用</label><input type="text" id="m-gpt-search" value="gpt-4o-search-preview"></div>
         <div><label>省エネ</label><input type="text" id="m-gpt-eco" value="gpt-5-mini"></div>
         <div><label>標準</label><input type="text" id="m-gpt-std" value="gpt-5.1"></div>
         <div><label>最高出力</label><input type="text" id="m-gpt-max" value="gpt-5.1"></div>
@@ -926,7 +968,7 @@
 </main>
 
 <input type="file" id="doc-file-input" multiple hidden accept=".docx,.doc,.xlsx,.xls,.xlsm,.pptx,.ppt,.pdf,.md,.txt,.csv,.json,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tif,.tiff,.heic,.heif">
-<footer>CAPITOLINE COUNCIL v3.2 — COUNCIL WEB SEARCH + URL FIX</footer>
+<footer>CAPITOLINE COUNCIL v3.7 — AUTO-EMBED IMAGES INTO ARTICLE</footer>
 
 <div id="dg-modal" role="dialog" aria-modal="true">
   <div class="dg-card">
@@ -964,6 +1006,10 @@
 
       <label style="margin-top:14px">② 形式</label>
       <div class="row">
+        <div style="flex:1"><button class="btn gold" data-expfmt="wp" style="width:100%">📝 WordPress用にコピー(表もそのまま貼れる)</button></div>
+      </div>
+      <div class="note" style="margin-top:2px">↑ WordPressの本文欄に貼り付ける(Ctrl+V)だけで、見出し・表・段落が再現されます。写真は後から追加OK。</div>
+      <div class="row" style="margin-top:8px">
         <div><button class="btn" data-expfmt="pdf" style="width:100%">📄 PDF</button></div>
         <div><button class="btn" data-expfmt="docx" style="width:100%">📝 Word</button></div>
         <div><button class="btn" data-expfmt="pptx" style="width:100%">📊 PowerPoint</button></div>
@@ -1014,27 +1060,69 @@ document.querySelectorAll('[data-toggle]').forEach(b=>{
 });
 $('cost-badge').addEventListener('click', ()=>{ document.querySelector('nav button[data-screen="settings"]').click(); });
 
-/* ========= ビューア ========= */
+/* ========= ビューア(全文・表グラフ画像つき) ========= */
 let vSize = parseInt(localStorage.getItem('capico_viewer_font')||'20',10);
 function applyVSize(){ $('vbody').style.fontSize = vSize+'px'; localStorage.setItem('capico_viewer_font', vSize); }
+/* テキスト(Markdown)を渡すと表・グラフも描画して全文表示 */
 function openViewer(title, text){
   if(!text || !text.trim()) return;
   $('vtitle').textContent = title || '全文表示';
-  $('vbody').textContent = text;
+  $('vbody').innerHTML = '';
+  if(typeof renderRich === 'function') renderRich($('vbody'), text);
+  else $('vbody').textContent = text;
   applyVSize();
   $('viewer').classList.add('open');
+  $('vbody').scrollTop = 0;
+}
+/* 既に描画済みの要素(表・グラフ・画像を含む)を拡大表示。
+   グラフはcanvasを複製できないため、元テキストから再描画する。
+   クリック位置に近い場所へスクロールする。 */
+function openViewerFromElement(title, sourceEl, clickY){
+  $('vtitle').textContent = title || '全文表示';
+  $('vbody').innerHTML = '';
+  const src = sourceEl.dataset.richsrc;
+  /* クリック位置の相対比率を先に計算 */
+  let ratio = 0;
+  if(typeof clickY === 'number'){
+    const r = sourceEl.getBoundingClientRect();
+    ratio = Math.max(0, Math.min(1, (clickY - r.top) / Math.max(1, r.height)));
+  }
+  if(src && typeof renderRich === 'function'){
+    renderRich($('vbody'), src);  /* 表・グラフを再描画 */
+  }else{
+    /* richsrcが無い場合はDOMを複製(画像などはそのまま活きる) */
+    const clone = sourceEl.cloneNode(true);
+    clone.style.maxHeight = 'none'; clone.classList.remove('readable');
+    $('vbody').appendChild(clone);
+  }
+  applyVSize();
+  $('viewer').classList.add('open');
+  /* グラフの描画完了を待ってからクリック位置へスクロール */
+  setTimeout(()=>{
+    $('vbody').scrollTop = ($('vbody').scrollHeight - $('vbody').clientHeight) * ratio;
+  }, 120);
 }
 $('v-close').addEventListener('click', ()=> $('viewer').classList.remove('open'));
 $('viewer').addEventListener('click', e=>{ if(e.target === $('viewer')) $('viewer').classList.remove('open'); });
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') $('viewer').classList.remove('open'); });
-$('v-bigger').addEventListener('click', ()=>{ vSize = Math.min(32, vSize+2); applyVSize(); });
+$('v-bigger').addEventListener('click', ()=>{ vSize = Math.min(40, vSize+2); applyVSize(); });
 $('v-smaller').addEventListener('click', ()=>{ vSize = Math.max(14, vSize-2); applyVSize(); });
 document.addEventListener('click', e=>{
+  /* コピーボタン等はビューアを開かない */
+  if(e.target.closest('.msg-copy-btn, .msg-actions, button, a, input, textarea, select, summary')) return;
   const el = e.target.closest('.readable, .agent.done, .agent.err, .sub-op');
   if(!el) return;
   if(el.classList.contains('agent')) openViewer('subagent: '+el.textContent, el.dataset.opinion || '(発言データなし)');
   else if(el.classList.contains('sub-op')) openViewer('神殿内発言: '+(el.querySelector('b')?.textContent||''), el.textContent);
-  else openViewer(el.dataset.vtitle || '全文表示', el.textContent);
+  else{
+    /* 本文: 描画済みの内容(表・グラフ・画像込み)をそのまま拡大し、クリック位置付近を表示 */
+    const title = el.dataset.vtitle || '全文表示';
+    if(el.dataset.richsrc || el.querySelector('table, canvas, img, .rich-chart')){
+      openViewerFromElement(title, el, e.clientY);
+    }else{
+      openViewer(title, el.textContent);
+    }
+  }
 });
 
 /* ========= 書類かばん ========= */
@@ -1289,7 +1377,7 @@ function defaults(){
     keys:{claude:'', gpt:'', gemini:''},
     models:{
       claude:{eco:'claude-haiku-4-5-20251001', std:'claude-sonnet-4-6', max:'claude-opus-4-8'},
-      gpt:{eco:'gpt-5-mini', std:'gpt-5.1', max:'gpt-5.1', search:'gpt-4o-search-preview'},
+      gpt:{eco:'gpt-5-mini', std:'gpt-5.1', max:'gpt-5.1'},
       gemini:{eco:'gemini-2.5-flash-lite', std:'gemini-2.5-flash', max:'gemini-2.5-flash'}
     },
     prices:{
@@ -1807,7 +1895,6 @@ function fillForm(){
   $('seat-jupiter').value = c.seats.jupiter; $('seat-juno').value = c.seats.juno; $('seat-minerva').value = c.seats.minerva;
   $('key-claude').value = c.keys.claude; $('key-gpt').value = c.keys.gpt; $('key-gemini').value = c.keys.gemini;
   for(const e of ['claude','gpt','gemini']) for(const t of ['eco','std','max']) $(`m-${e}-${t}`).value = c.models[e][t];
-  if($('m-gpt-search')) $('m-gpt-search').value = (c.models.gpt && c.models.gpt.search) || 'gpt-4o-search-preview';
   $('fx-rate').value = c.fx; $('cap-yen').value = c.capYen;
   $('gh-token').value = c.sync.ghToken; $('gist-id').value = c.sync.gistId; $('mem-pass').value = c.sync.pass;
   buildPriceUI(); refreshSeatsUI(c); renderUsage(); buildMemUI(); refreshMemBadge();
@@ -1853,8 +1940,6 @@ $('btn-save').addEventListener('click',()=>{
     c.prices[e] = {};
     for(const t of ['eco','std','max']) c.prices[e][t] = {i: parseFloat($(`p-${e}-${t}-i`).value)||0, o: parseFloat($(`p-${e}-${t}-o`).value)||0};
   }
-  /* GPTのWeb検索用モデル */
-  const gse = $('m-gpt-search'); if(gse) c.models.gpt.search = gse.value.trim() || 'gpt-4o-search-preview';
   localStorage.setItem(CONF_KEY, JSON.stringify(c));
   $('saved-msg').textContent = '保存しました';
   setTimeout(()=> $('saved-msg').textContent = '', 4000);
@@ -1980,17 +2065,13 @@ async function callEngineRaw(engine, tier, systemText, messages, maxTokens, web)
   }
   if(engine === 'gpt'){
     return withRetry(async ()=>{
-      /* Web検索ON時は検索対応モデルに切替(gpt-4o-search-preview系) */
-      let useModel = model;
-      const reqBody = {messages:[{role:'system',content:systemText}, ...messages]};
-      if(web){
-        useModel = c.models.gpt.search || 'gpt-4o-search-preview';
-        reqBody.web_search_options = {search_context_size:'medium'};
-        /* 検索モデルはmax_completion_tokens/temperature非対応のことがあるため付けない */
-      }else{
-        reqBody.max_completion_tokens = maxTokens||1500;
-      }
-      reqBody.model = useModel;
+      /* ChatGPTは検索を担当しない(検索モデルはレート制限が厳しく評議会で破綻するため)。
+         常に通常モデルで批判・反論役に徹する。事実確認はClaude/Geminiが担当。 */
+      const reqBody = {
+        model,
+        max_completion_tokens: maxTokens||1500,
+        messages:[{role:'system',content:systemText}, ...messages]
+      };
       const res = await fetch('https://api.openai.com/v1/chat/completions',{
         method:'POST', signal: abortSignal(),
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
@@ -2623,12 +2704,198 @@ function renderMsg(role, text, isErr, scrollDown){
   body.dataset.vtitle = role==='user' ? 'あなたの発言' : 'ユピテルの回答';
   if(role === 'user' || isErr) body.textContent = text;
   else renderRich(body, text);
-  div.appendChild(who); div.appendChild(body); box.appendChild(div);
-  /* 進捗表示が残っていれば消す */
+  div.appendChild(who); div.appendChild(body);
+  /* AI回答にWordPress用コピーボタンを添える */
+  if(role === 'ai' && !isErr){
+    const bar = document.createElement('div'); bar.className = 'msg-actions';
+    const wpb = document.createElement('button'); wpb.className = 'msg-copy-btn';
+    wpb.textContent = '📝 WordPress用にコピー';
+    wpb.addEventListener('click', async ()=>{
+      const html = mdBodyToHTML(text);
+      const ok = await copyRichHTML(html, text);
+      wpb.textContent = ok ? '✅ コピーしました' : '⚠ 失敗';
+      setTimeout(()=>{ wpb.textContent = '📝 WordPress用にコピー'; }, 2000);
+    });
+    const txtb = document.createElement('button'); txtb.className = 'msg-copy-btn';
+    txtb.textContent = '📋 文字だけ';
+    txtb.addEventListener('click', async ()=>{
+      try{ await navigator.clipboard.writeText(text); txtb.textContent='✅'; setTimeout(()=>txtb.textContent='📋 文字だけ',1500); }catch(e){}
+    });
+    bar.appendChild(wpb); bar.appendChild(txtb);
+    div.appendChild(bar);
+  }
+  box.appendChild(div);
   if(SYS_MSG_EL){ SYS_MSG_EL.remove(); SYS_MSG_EL = null; }
   if(scrollDown !== false) box.scrollTop = box.scrollHeight;
 }
 /* 検証結果を折りたたみで直前のAI回答に添付 */
+/* 投稿用記事のツール: 題名/本文の分離コピー + フリー素材提示 */
+function attachArticleTools(art, rawReply){
+  const box = $('chat-box');
+  const wrap = document.createElement('div');
+  wrap.className = 'article-tools';
+  wrap.innerHTML = '<div class="at-head">📰 投稿用ツール</div>';
+
+  /* 記事の状態(画像を差し込むと body が更新される) */
+  const state = { title: art.title || '', body: art.body || '', images: [] };
+
+  /* 題名 */
+  if(art.isArticle && art.title){
+    const t = document.createElement('div'); t.className = 'at-row';
+    t.innerHTML = `<span class="at-label">題名:</span><span class="at-title">${art.title.replace(/</g,'&lt;')}</span>`;
+    const cp = document.createElement('button'); cp.className='msg-copy-btn'; cp.textContent='📋 題名をコピー';
+    cp.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(state.title); cp.textContent='✅'; setTimeout(()=>cp.textContent='📋 題名をコピー',1500);}catch(e){} });
+    t.appendChild(cp); wrap.appendChild(t);
+  }
+
+  /* 本文プレビュー(画像を差し込むと更新される) */
+  const preview = document.createElement('div');
+  preview.className = 'at-preview';
+  const renderPreview = ()=>{
+    preview.innerHTML = '';
+    if(typeof renderRichArticle === 'function') renderRichArticle(preview, state.body);
+    else renderRich(preview, state.body);
+  };
+  renderPreview();
+
+  /* 本文コピー */
+  const b = document.createElement('div'); b.className = 'at-row';
+  b.innerHTML = `<span class="at-label">本文:</span>`;
+  const wpb = document.createElement('button'); wpb.className='msg-copy-btn';
+  wpb.textContent = '📝 本文をWordPress用にコピー(画像・表つき)';
+  wpb.addEventListener('click', async ()=>{
+    const html = mdBodyToHTML(state.body);
+    const ok = await copyRichHTML(html, state.body);
+    wpb.textContent = ok ? '✅ 本文をコピーしました(画像入り)' : '⚠ 失敗';
+    setTimeout(()=>wpb.textContent='📝 本文をWordPress用にコピー(画像・表つき)', 2200);
+  });
+  b.appendChild(wpb); wrap.appendChild(b);
+
+  if(art.isArticle && art.title){
+    const both = document.createElement('div'); both.className='at-note';
+    both.textContent = 'WordPressでは、題名を上のタイトル欄に、本文を下の本文欄に貼り分けてください。画像は本文に埋め込まれた状態でコピーされます。';
+    wrap.appendChild(both);
+  }
+
+  const pvLabel = document.createElement('div'); pvLabel.className='at-note'; pvLabel.style.marginTop='4px';
+  pvLabel.textContent = '▼ 本文プレビュー(画像を選ぶとここに差し込まれます)';
+  wrap.appendChild(pvLabel);
+  wrap.appendChild(preview);
+
+  /* フリー素材の画像検索 */
+  const imgSec = document.createElement('div'); imgSec.className='at-imgsec';
+  const imgBtn = document.createElement('button'); imgBtn.className='btn gold'; imgBtn.style.cssText='margin:0;padding:7px 14px;font-size:13px';
+  imgBtn.textContent = '🖼 記事に使えるフリー素材を探す';
+  const imgResult = document.createElement('div'); imgResult.className='free-img-grid';
+  imgBtn.addEventListener('click', async ()=>{
+    let q = state.title || state.body.slice(0,40);
+    const kw = prompt('画像を探すキーワード(英語のほうが多くヒットします。例: soccer stadium, World Cup)', q);
+    if(!kw) return;
+    imgBtn.disabled = true; imgBtn.textContent = '検索中…';
+    imgResult.innerHTML = '';
+    try{
+      const imgs = await searchFreeImages(kw);
+      if(imgs.length === 0){ imgResult.innerHTML = '<div class="at-note">見つかりませんでした。別のキーワード(英語)でお試しください。</div>'; }
+      imgs.forEach(im=>{
+        const tier = licenseTier(im.license);
+        const card = document.createElement('div'); card.className = 'fimg fimg-'+tier.color;
+        card.innerHTML = `<img src="${im.thumb}" alt="" loading="lazy"><div class="fimg-lic">${im.license||'?'}</div>`;
+        card.title = tier.label;
+        /* クリック → 確認画面 → 「この画像を使う」で本文に自動挿入 */
+        card.addEventListener('click', ()=> openFreeImage(im, tier, (chosen)=> insertImageIntoArticle(state, chosen, renderPreview)));
+        imgResult.appendChild(card);
+      });
+    }catch(e){ imgResult.innerHTML = '<div class="at-note">画像検索に失敗: '+e.message+'</div>'; }
+    imgBtn.disabled = false; imgBtn.textContent = '🖼 記事に使えるフリー素材を探す';
+  });
+  imgSec.appendChild(imgBtn);
+  const noteEl = document.createElement('div'); noteEl.className='at-note';
+  noteEl.textContent = '↑ ライセンスが明確な素材(Openverse経由)のみ。緑=クレジット不要 / 金=クレジット表記で可 / 赤=制限あり。画像を選び「この画像を使う」を押すと、本文の適切な位置に自動で差し込まれます(必要なクレジットも一緒に)。';
+  imgSec.appendChild(noteEl);
+  imgSec.appendChild(imgResult);
+  wrap.appendChild(imgSec);
+
+  box.appendChild(wrap);
+  box.scrollTop = box.scrollHeight;
+}
+
+/* 選ばれた画像を本文の最適な位置に自動挿入 */
+function insertImageIntoArticle(state, im, onDone){
+  const tier = licenseTier(im.license);
+  /* Markdown画像 + (必要なら)クレジット行 */
+  const alt = (im.title||'画像').replace(/[\[\]]/g,'');
+  let imgMd = `\n\n![${alt}](${im.full})`;
+  if(tier.color === 'gold' || tier.color === 'red'){
+    const credit = im.attribution || `"${im.title}" by ${im.creator} (${im.license})`;
+    imgMd += `\n*出典: ${credit}*`;
+  }
+  imgMd += '\n\n';
+
+  const body = state.body;
+  let pos = -1;
+  /* 挿入位置の決定ロジック:
+     1. [画像挿入:...]マーカーがあればそこを置換
+     2. 無ければ最初の見出し(##)の直後の段落の後
+     3. それも無ければ冒頭の段落の後 */
+  const marker = body.match(/\[画像挿入[:：][^\]]*\]/);
+  if(marker){
+    state.body = body.replace(marker[0], imgMd.trim());
+  }else{
+    /* 最初の ## 見出し行を探し、その次の段落の後ろに挿入 */
+    const lines = body.split('\n');
+    let insertLine = -1;
+    let seenHeading = false;
+    for(let i=0;i<lines.length;i++){
+      if(/^#{1,4}\s/.test(lines[i].trim())){ seenHeading = true; continue; }
+      if(seenHeading && lines[i].trim() && !/^\|/.test(lines[i].trim())){
+        /* 見出し後、最初の本文段落の行 → その段落の終わり(次の空行)を探す */
+        let j = i;
+        while(j < lines.length && lines[j].trim()) j++;
+        insertLine = j; break;
+      }
+    }
+    if(insertLine === -1){
+      /* 見出しが無い場合: 冒頭の最初の段落の後 */
+      let j = 0;
+      while(j < lines.length && !lines[j].trim()) j++;      /* 空行スキップ */
+      while(j < lines.length && lines[j].trim()) j++;        /* 段落本体 */
+      insertLine = j;
+    }
+    lines.splice(insertLine, 0, imgMd.trim());
+    state.body = lines.join('\n');
+  }
+  state.images.push(im);
+  if(onDone) onDone();
+  alert('✅ 画像を本文に差し込みました。\n\n「📝本文をWordPress用にコピー」を押して貼り付ければ、画像ごと入ります。');
+}
+
+/* フリー画像を拡大し、「この画像を使う」で本文へ挿入 */
+function openFreeImage(im, tier, onUse){
+  $('vtitle').textContent = '画像を使いますか?';
+  const credit = im.attribution || `"${im.title}" by ${im.creator} (${im.license})`;
+  const colorLabel = {green:'✅ クレジット不要でそのまま使えます', gold:'⚠ クレジット表記をすれば使えます(自動で本文に添えます)', red:'⛔ 商用不可/改変不可などの制限あり。使用前に必ず確認', gray:'❓ ライセンス要確認'}[tier.color];
+  $('vbody').innerHTML = `
+    <div class="fimg-detail fimg-${tier.color}">
+      <img src="${im.full}" style="max-width:100%;height:auto;border-radius:6px" alt="">
+      <div class="fid-row"><b>ライセンス:</b> ${im.license||'不明'} <span class="fid-tier">${colorLabel}</span></div>
+      <div class="fid-row"><b>作者:</b> ${im.creator||'不明'}</div>
+      <div class="fid-row"><b>出典:</b> <a href="${im.foreignUrl}" target="_blank" rel="noopener">${im.source||im.foreignUrl}</a></div>
+      <div class="fid-actions">
+        <button class="btn gold" id="fid-use" style="margin:0;font-size:15px;padding:9px 18px">✅ この画像を使う(本文に差し込む)</button>
+        <a class="btn ghost" href="${im.foreignUrl}" target="_blank" rel="noopener" style="margin:0;text-decoration:none">🔗 元ページで確認</a>
+      </div>
+      <div class="at-note">「この画像を使う」を押すと、本文の適切な位置に自動で差し込まれます。${(tier.color==='gold'||tier.color==='red')?'クレジット表記も一緒に挿入されます。':''}${tier.color==='red'?' ⚠この画像は商用不可/改変不可の制限があります。収益化ブログでの使用は避けてください。':''}</div>
+    </div>`;
+  applyVSize();
+  $('viewer').classList.add('open');
+  $('vbody').scrollTop = 0;
+  const useBtn = document.getElementById('fid-use');
+  if(useBtn) useBtn.addEventListener('click', ()=>{
+    $('viewer').classList.remove('open');
+    if(onUse) onUse(im);
+  });
+}
+
 function attachVerification(verification){
   const box = $('chat-box');
   const det = document.createElement('details');
@@ -2663,8 +2930,11 @@ async function sendQuick(){
   setQuickDeity('thinking');
   newAbort();
   const costStart = monthTotals().total;
+  const articleMode = isArticleRequest(text);
   try{
-    const sys = seatSys('jupiter') + digestContext(sc.digest) + ` 現在の巻物(話題): 「${sc.name}」。主宰の質問に議長として的確に日本語で答えよ。応対ルールを厳守。`;
+    const sys = seatSys('jupiter') + digestContext(sc.digest)
+      + (articleMode ? articleRule() : '')
+      + ` 現在の巻物(話題): 「${sc.name}」。主宰の質問に議長として的確に日本語で答えよ。応対ルールを厳守。`;
     /* メッセージにURLがあればページ内容を読み取って添付 */
     let urlCtx = '';
     if(extractUrls(text).length > 0){
@@ -2698,6 +2968,11 @@ async function sendQuick(){
     }
     renderMsg('ai', reply);
     if(LAST_VERIFICATION){ attachVerification(LAST_VERIFICATION); LAST_VERIFICATION=''; }
+    /* 投稿用記事モード: 題名/本文の分離コピー + フリー素材の提示 */
+    if(articleMode){
+      const art = splitArticle(reply);
+      attachArticleTools(art, reply);
+    }
     setQuickDeity('done');
     const s2 = loadScrolls();
     const sc2 = s2.list.find(x=>x.id===s2.activeId);
@@ -3347,6 +3622,120 @@ function docToMD(doc){
   return md;
 }
 
+/* ===== Markdown → HTML(WordPress貼り付け用) ===== */
+function mdInline(t){
+  /* エスケープしてから太字・リンクだけ変換 */
+  t = String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  t = t.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2">$1</a>');
+  return t;
+}
+/* 本文テキスト(Markdown)をHTMLブロック列に変換 */
+function mdBodyToHTML(text){
+  const parts = splitRich(text); /* 既存の分解(文章/表/chart)を再利用 */
+  let html = '';
+  parts.forEach(p=>{
+    if(p.kind === 'table'){
+      html += '<figure class="wp-block-table"><table><tbody>';
+      p.rows.forEach((r,ri)=>{
+        html += '<tr>' + r.map(c=> ri===0 ? `<th>${mdInline(c)}</th>` : `<td>${mdInline(c)}</td>`).join('') + '</tr>';
+      });
+      html += '</tbody></table></figure>\n';
+    }else if(p.kind === 'chart'){
+      /* グラフはWordPressで描けないので、データを表として出す */
+      const sp = p.spec||{}; const labels = sp.labels||[];
+      html += `<p><strong>${mdInline(sp.title||'データ')}</strong></p>`;
+      html += '<figure class="wp-block-table"><table><tbody><tr><th>項目</th>'
+           + (sp.datasets||[]).map(d=>`<th>${mdInline(d.label||'')}</th>`).join('') + '</tr>';
+      labels.forEach((lb,i)=>{
+        html += `<tr><td>${mdInline(lb)}</td>`
+             + (sp.datasets||[]).map(d=>`<td>${mdInline(String((d.data||[])[i]??''))}</td>`).join('') + '</tr>';
+      });
+      html += '</tbody></table></figure>\n';
+    }else{
+      /* 文章: 行ごとに見出し/箇条書き/画像/段落を判定 */
+      const lines = p.text.split('\n');
+      let inList = false;
+      const closeList = ()=>{ if(inList){ html += '</ul>\n'; inList=false; } };
+      let pendingImg = null; /* 直前が画像なら、次のクレジット行をキャプションにできる */
+      const flushImg = ()=>{
+        if(pendingImg){
+          html += `<figure class="wp-block-image size-large"><img src="${pendingImg.url}" alt="${pendingImg.alt}"/></figure>\n`;
+          pendingImg = null;
+        }
+      };
+      lines.forEach(line=>{
+        const t = line.trim();
+        if(!t){ flushImg(); closeList(); return; }
+        let m;
+        /* 画像: ![alt](url) が行の主要素 */
+        if(m = t.match(/^!\[([^\]]*)\]\((https?:\/\/[^)]+)\)\s*$/)){
+          flushImg(); closeList();
+          pendingImg = {alt: mdInline(m[1]), url: m[2]};
+        }
+        /* クレジット行: *出典: ...* または *...* (直前が画像ならキャプション) */
+        else if(m = t.match(/^\*([^*].*?)\*\s*$/)){
+          if(pendingImg){
+            html += `<figure class="wp-block-image size-large"><img src="${pendingImg.url}" alt="${pendingImg.alt}"/><figcaption>${mdInline(m[1])}</figcaption></figure>\n`;
+            pendingImg = null;
+          }else{
+            closeList();
+            html += `<p><em>${mdInline(m[1])}</em></p>\n`;
+          }
+        }
+        else if(m = t.match(/^(#{1,4})\s+(.*)$/)){
+          flushImg(); closeList();
+          const lv = Math.min(m[1].length+1, 4); /* # → h2 から */
+          html += `<h${lv}>${mdInline(m[2])}</h${lv}>\n`;
+        }else if(m = t.match(/^[-・]\s+(.*)$/) || (t.match(/^\*\s+(.*)$/) && (m=t.match(/^\*\s+(.*)$/)))){
+          flushImg();
+          if(!inList){ html += '<ul>\n'; inList=true; }
+          html += `<li>${mdInline(m[1])}</li>\n`;
+        }else{
+          flushImg(); closeList();
+          html += `<p>${mdInline(t)}</p>\n`;
+        }
+      });
+      flushImg();
+      closeList();
+    }
+  });
+  return html;
+}
+/* doc全体をWordPress貼り付け用HTMLに */
+function docToHTML(doc){
+  let html = `<h1>${mdInline(doc.title)}</h1>\n`;
+  doc.blocks.forEach(b=>{
+    /* 議事録の見出し(議題・裁定など)はh2、本文は変換 */
+    if(b.h && !/^(議長 ユピテル|主宰)$/.test(b.h)) html += `<h2>${mdInline(b.h)}</h2>\n`;
+    html += mdBodyToHTML(b.p);
+  });
+  return html;
+}
+/* リッチHTMLをクリップボードにコピー(貼り付けると整形が再現される) */
+async function copyRichHTML(html, plainFallback){
+  try{
+    const blob = new Blob([html], {type:'text/html'});
+    const blobTxt = new Blob([plainFallback||html.replace(/<[^>]+>/g,'')], {type:'text/plain'});
+    await navigator.clipboard.write([new ClipboardItem({'text/html':blob, 'text/plain':blobTxt})]);
+    return true;
+  }catch(e){
+    /* 古い環境向けフォールバック: 選択してcopy */
+    try{
+      const div = document.createElement('div');
+      div.contentEditable = 'true';
+      div.innerHTML = html;
+      div.style.cssText = 'position:fixed;left:-9999px;top:0';
+      document.body.appendChild(div);
+      const range = document.createRange(); range.selectNodeContents(div);
+      const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      const ok = document.execCommand('copy');
+      sel.removeAllRanges(); div.remove();
+      return ok;
+    }catch(e2){ return false; }
+  }
+}
+
 /* --- 形式ボタンの配線 --- */
 document.querySelectorAll('[data-expfmt]').forEach(btn=>{
   btn.addEventListener('click', async ()=>{
@@ -3360,8 +3749,13 @@ document.querySelectorAll('[data-expfmt]').forEach(btn=>{
       else if(fmt === 'docx'){ await exportDOCX(doc); $('exp-modal').classList.remove('open'); }
       else if(fmt === 'pptx'){ await exportPPTX(doc); $('exp-modal').classList.remove('open'); }
       else if(fmt === 'md'){ dlBlob(new Blob([docToMD(doc)],{type:'text/markdown'}), safeName(doc.title)+'.md'); $('exp-modal').classList.remove('open'); }
+      else if(fmt === 'wp'){
+        const ok = await copyRichHTML(docToHTML(doc), docToMD(doc));
+        alert(ok ? '✅ WordPress用にコピーしました。\n\nWordPressの本文欄に貼り付ける(Ctrl+V / ⌘V)と、見出し・表・段落がそのまま再現されます。写真は後から普通に追加できます。' : 'コピーに失敗しました。ブラウザを変えてお試しください。');
+        $('exp-modal').classList.remove('open');
+      }
       else if(fmt === 'copy'){
-        try{ await navigator.clipboard.writeText(docToMD(doc)); alert('クリップボードにコピーしました'); $('exp-modal').classList.remove('open'); }
+        try{ await navigator.clipboard.writeText(docToMD(doc)); alert('クリップボードにコピーしました(記号付きのテキスト形式)'); $('exp-modal').classList.remove('open'); }
         catch(e){ openViewer('書き出し内容(手動でコピーしてください)', docToMD(doc)); }
       }
     }catch(e){ alert('書き出しに失敗: ' + e.message); }
@@ -3660,6 +4054,72 @@ function wireMic(btnId, targetId){
 
 /* ========= 表・グラフ描画エンジン ========= */
 /* AIへの指示文(表・グラフを使わせる) */
+/* ========= 投稿用記事モード ========= */
+/* 「投稿用の記事」「WordPress」「ブログ記事」等の指示を検出 */
+function isArticleRequest(text){
+  return /投稿用|ブログ記事|wordpress|ワードプレス|記事を書|記事に(して|し て)|記事化|公開(用|する)|投稿する記事/i.test(text||'');
+}
+/* 記事モード時に議長へ渡す追加指示: 題名と本文を分離させる */
+function articleRule(){
+  return `\n\n=== 投稿用記事モード(重要) ===
+主宰は「公開・投稿する記事」を求めている。以下を厳守せよ:
+1. 記事は必ず次の形式で出力する(この見出し行をそのまま含めよ):
+【題名】
+(30字前後の魅力的なタイトルを1行)
+【本文】
+(本文。見出しは##、強調は**で。表・グラフは通常ルール通り)
+2. 事実(日程・数値・人名・結果)は、Web検索で確認できたものだけを断定し、未確認は「(要確認)」と明記せよ。
+3. 記事本文に画像は自分で貼らない(著作権のため)。画像は別途システムが安全なフリー素材を提示する。
+   本文中には[画像挿入: どんな画像が欲しいか]という目印だけ置いてよい。`;
+}
+/* 回答から題名と本文を分離 */
+function splitArticle(text){
+  const t = String(text||'');
+  const mTitle = t.match(/【題名】\s*\n?([^\n]+)/);
+  const mBody = t.match(/【本文】\s*\n?([\s\S]*)$/);
+  if(mTitle && mBody){
+    return {title: mTitle[1].trim(), body: mBody[1].trim(), isArticle:true};
+  }
+  return {title:'', body:t, isArticle:false};
+}
+
+/* ===== フリー素材の画像検索(投稿用) ===== */
+/* ライセンスが構造的に保証されたサイトのみ。各サイトのライセンスを明記して返す */
+const FREE_IMG_SOURCES = [
+  {name:'Openverse', color:'green', licenseNote:'CC0/CCライセンス(各画像に表示)', credit:'画像ごとに要確認(多くはクレジット推奨)',
+   url:q=>`https://openverse.org/search/?q=${encodeURIComponent(q)}`,
+   api:q=>`https://api.openverse.org/v1/images/?q=${encodeURIComponent(q)}&license_type=commercial,modification&page_size=12`},
+];
+/* Openverse API(認証不要)で商用利用可・改変可の画像を検索 */
+async function searchFreeImages(query){
+  const url = `https://api.openverse.org/v1/images/?q=${encodeURIComponent(query)}&license_type=commercial,modification&page_size=15`;
+  try{
+    const res = await fetch(url, {signal: abortSignal()});
+    if(!res.ok) throw new Error('画像検索に失敗(HTTP '+res.status+')');
+    const data = await res.json();
+    return (data.results||[]).map(im=>({
+      thumb: im.thumbnail || im.url,
+      full: im.url,
+      title: im.title || '無題',
+      creator: im.creator || '作者不明',
+      license: (im.license||'').toUpperCase() + (im.license_version? ' '+im.license_version : ''),
+      licenseUrl: im.license_url || '',
+      source: im.source || '',
+      foreignUrl: im.foreign_landing_url || im.url,
+      attribution: im.attribution || ''
+    }));
+  }catch(e){ throw e; }
+}
+/* ライセンスの安全度を色で分類 */
+function licenseTier(license){
+  const l = (license||'').toLowerCase();
+  /* 制限(NC=商用不可, ND=改変不可)を最優先で判定 */
+  if(l.includes('nc') || l.includes('nd')) return {color:'red', label:'商用不可/改変不可の制限あり — ブログ収益化時は使用不可。要確認'};
+  if(l.includes('cc0') || l.includes('pdm') || l.includes('public')) return {color:'green', label:'クレジット不要でそのまま使える'};
+  if(l.includes('by')) return {color:'gold', label:'クレジット(作者名+ライセンス)を書けば使える'};
+  return {color:'gray', label:'ライセンス要確認'};
+}
+
 function chartRule(){
   if(localStorage.getItem('capico_chart') === '0') return '';
   return `\n\n=== 図表の提示ルール ===
@@ -3783,8 +4243,57 @@ function buildChart(spec){
   return wrap;
 }
 /* AIの回答を「文章＋表＋グラフ」として描画 */
+/* 記事プレビュー: 画像markdownも実際の画像として描画 */
+function renderRichArticle(el, text){
+  el.innerHTML = '';
+  const parts = splitRich(text);
+  parts.forEach(p=>{
+    if(p.kind === 'chart'){ el.appendChild(buildChart(p.spec)); return; }
+    if(p.kind === 'table'){ el.appendChild(buildTable(p.rows)); return; }
+    /* 文章パート: 行単位で画像/クレジット/その他を判定 */
+    const lines = p.text.split('\n');
+    let buf = [];
+    const flushText = ()=>{
+      if(buf.length){
+        const d = document.createElement('div');
+        d.style.whiteSpace = 'pre-wrap';
+        d.textContent = buf.join('\n');
+        el.appendChild(d);
+        buf = [];
+      }
+    };
+    lines.forEach(line=>{
+      const t = line.trim();
+      let m;
+      if(m = t.match(/^!\[([^\]]*)\]\((https?:\/\/[^)]+)\)\s*$/)){
+        flushText();
+        const fig = document.createElement('figure');
+        fig.className = 'at-preview-img';
+        const img = document.createElement('img');
+        img.src = m[2]; img.alt = m[1]; img.loading = 'lazy';
+        fig.appendChild(img);
+        el.appendChild(fig);
+      }else if(m = t.match(/^\*出典[:：]([^*]+)\*\s*$/)){
+        /* 直前の図にキャプションを付ける */
+        const last = el.lastElementChild;
+        if(last && last.tagName === 'FIGURE'){
+          const cap = document.createElement('figcaption');
+          cap.textContent = '出典:' + m[1];
+          last.appendChild(cap);
+        }else{
+          buf.push(t);
+        }
+      }else{
+        buf.push(line);
+      }
+    });
+    flushText();
+  });
+}
+
 function renderRich(el, text){
   el.innerHTML = '';
+  el.dataset.richsrc = text; /* 拡大ビューアで表・グラフごと再描画するため元テキストを保持 */
   const parts = splitRich(text);
   if(parts.length === 1 && parts[0].kind === 'text'){
     el.textContent = text; /* 図表なしの場合は従来通り */
