@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Capitoline Council — CapiCo v4.3</title>
+<title>Capitoline Council — CapiCo v4.4</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <!-- PowerPoint生成(JSZipを内包) -->
@@ -461,6 +461,18 @@
   .at-preview table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12.5px}
   .at-preview th{background:var(--gold-soft);border:1px solid var(--edge);padding:6px 8px}
   .at-preview td{border:1px solid var(--edge);padding:6px 8px}
+  /* ===== 投稿ツールの手順表示 ===== */
+  .at-step{background:#fff;border:1px solid var(--edge);border-radius:6px;padding:10px 12px;margin:8px 0}
+  .at-step-label{font-size:13px;font-weight:bold;color:var(--gold);margin-bottom:6px}
+  .at-copybtn{background:var(--gold);color:#fff;border:none;border-radius:6px;
+    padding:8px 16px;font-size:13.5px;font-weight:bold;cursor:pointer;white-space:nowrap}
+  .at-copybtn:hover{filter:brightness(1.08)}
+  .at-copybtn:disabled{background:#bbb;cursor:not-allowed}
+  .at-copybtn.at-big{display:block;width:100%;padding:13px 18px;font-size:15.5px}
+  .at-copybtn.at-wp{background:#21759B}
+  .at-unverified{background:#FFF8E8;border:1px solid #E0C67A;border-radius:6px;padding:4px 8px;margin:8px 0}
+  .at-unverified summary{cursor:pointer;font-size:12.5px;font-weight:bold;color:#8A6D1F;padding:5px}
+  .at-unv-body{white-space:pre-wrap;font-size:12.5px;color:var(--ink);padding:4px 8px 8px;line-height:1.6}
   /* ===== 写真ピッカー(候補を並べてチェックで選ぶ) ===== */
   .photo-picker{background:#FFFBF0;border:2px solid var(--gold);border-radius:8px;padding:14px 16px;margin:10px 0}
   .pp-head{font-weight:bold;color:var(--gold);font-size:15px;margin-bottom:6px}
@@ -637,7 +649,7 @@
 <header>
   <div class="brand">
     <span class="en">CAPITOLINE COUNCIL</span>
-    <span class="jp">カピトリーノ評議会 — CapiCo v4.3 / Private AI Agents Company</span>
+    <span class="jp">カピトリーノ評議会 — CapiCo v4.4 / Private AI Agents Company</span>
   </div>
   <div class="chair-badge" id="chair-badge">現議長: <b>—</b></div>
   <div class="mem-badge" id="mem-badge">記憶: 未読込</div>
@@ -1020,6 +1032,23 @@
       </div>
       <div class="note">評議会タブの上部に、三神が石柱の前の玉座に座る様子が表示され、考え中・発言中・確定でアニメーションします。ゼーレテーマでは赤い三角モノリスⅠ・Ⅱ・Ⅲに変わります。</div>
     </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 6px;font-size:15px;color:var(--gold)">📤 WordPress自動投稿</h3>
+      <div class="note" style="margin-bottom:8px">記事を<b>下書き</b>としてWordPressへ直接送れます(いきなり公開はされません)。<br>
+      <b>アプリケーションパスワードの作り方:</b> WordPress管理画面 → 左メニュー「ユーザー」→「プロフィール」→ 下へスクロール →「アプリケーションパスワード」→ 名前に「CapiCo」と入れて「新しいアプリケーションパスワードを追加」→ 表示される24文字をコピー(この画面を離れると二度と見られません)。</div>
+      <div class="row">
+        <div><label for="wp-url">サイトURL</label><input type="text" id="wp-url" placeholder="https://lia-sports.com"></div>
+        <div><label for="wp-user">WordPressのユーザー名</label><input type="text" id="wp-user" placeholder="ログイン時のユーザー名"></div>
+        <div><label for="wp-pass">アプリケーションパスワード</label><input type="password" id="wp-pass" placeholder="24文字(空白ありでも可)"></div>
+      </div>
+      <div class="row">
+        <div><button class="btn" id="btn-wp-save">この設定を保存</button></div>
+        <div><button class="btn ghost" id="btn-wp-test" style="margin-top:14px">🔌 接続テスト</button></div>
+      </div>
+      <div class="note" id="wp-status"></div>
+      <div class="note">※この3項目はこの端末にのみ保存され、クラウド同期されません(安全のため)。端末ごとに入力してください。</div>
+    </div>
     <div class="card">
       <h2 style="margin-bottom:4px">SEAT ASSIGNMENT<span class="jp">席割当</span></h2>
       <div class="row">
@@ -1069,7 +1098,7 @@
 </main>
 
 <input type="file" id="doc-file-input" multiple hidden accept=".docx,.doc,.xlsx,.xls,.xlsm,.pptx,.ppt,.pdf,.md,.txt,.csv,.json,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tif,.tiff,.heic,.heif">
-<footer>CAPITOLINE COUNCIL v4.3 — ARTICLE MODE IN COUNCIL TOO</footer>
+<footer>CAPITOLINE COUNCIL v4.4 — WP AUTO-POST / AI PHOTO SEARCH / CLEAN BODY</footer>
 
 <div id="dg-modal" role="dialog" aria-modal="true">
   <div class="dg-card">
@@ -2952,62 +2981,115 @@ function attachArticleTools(art, rawReply, boxEl){
   wrap.className = 'article-tools';
   wrap.innerHTML = '<div class="at-head">📰 投稿用ツール</div>';
 
-  /* 記事の状態(画像を差し込むと body が更新される) */
-  const state = { title: art.title || '', body: art.body || '', images: [], isHTML: !!art.isHTML };
+  const state = { title: art.title || '', body: art.body || '', images: [], isHTML: !!art.isHTML, eyecatch:null };
 
-  /* 題名 */
-  if(art.isArticle && art.title){
-    const t = document.createElement('div'); t.className = 'at-row';
-    t.innerHTML = `<span class="at-label">題名:</span><span class="at-title">${art.title.replace(/</g,'&lt;')}</span>`;
-    const cp = document.createElement('button'); cp.className='msg-copy-btn'; cp.textContent='📋 題名をコピー';
-    cp.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(state.title); cp.textContent='✅'; setTimeout(()=>cp.textContent='📋 題名をコピー',1500);}catch(e){} });
-    t.appendChild(cp); wrap.appendChild(t);
+  /* ===== ① 題名 ===== */
+  const t = document.createElement('div'); t.className = 'at-step';
+  t.innerHTML = '<div class="at-step-label">① 題名(WordPressのタイトル欄へ)</div>';
+  const tRow = document.createElement('div'); tRow.className = 'at-row';
+  const tText = document.createElement('span'); tText.className='at-title'; tText.textContent = state.title || '(題名なし)';
+  const tBtn = document.createElement('button'); tBtn.className='at-copybtn'; tBtn.textContent='📋 題名をコピー';
+  tBtn.addEventListener('click', async ()=>{
+    try{ await navigator.clipboard.writeText(state.title); tBtn.textContent='✅ コピーしました'; setTimeout(()=>tBtn.textContent='📋 題名をコピー',1600);}catch(e){}
+  });
+  tRow.appendChild(tText); tRow.appendChild(tBtn);
+  t.appendChild(tRow); wrap.appendChild(t);
+
+  /* ===== ② 本文 ===== */
+  const b = document.createElement('div'); b.className = 'at-step';
+  b.innerHTML = '<div class="at-step-label">② 本文(WordPressの本文欄へ)</div>';
+  const bBtn = document.createElement('button'); bBtn.className='at-copybtn at-big';
+  bBtn.textContent = '📝 本文をコピー(写真・表つき)';
+  bBtn.addEventListener('click', async ()=>{
+    const html = state.isHTML ? sanitizeHTML(state.body) : mdBodyToHTML(state.body);
+    const plain = state.isHTML ? html.replace(/<[^>]+>/g,' ') : state.body;
+    const ok = await copyRichHTML(html, plain);
+    bBtn.textContent = ok ? '✅ 本文をコピーしました' : '⚠ コピー失敗';
+    setTimeout(()=>bBtn.textContent='📝 本文をコピー(写真・表つき)', 2200);
+  });
+  b.appendChild(bBtn);
+  const bNote = document.createElement('div'); bNote.className='at-note';
+  bNote.textContent = 'WordPressの本文欄に貼り付ける(Ctrl+V)と、見出し・表・写真がそのまま入ります。';
+  b.appendChild(bNote);
+  wrap.appendChild(b);
+
+  /* ===== 未確認事項(記事には含まれない) ===== */
+  if(art.unverified && art.unverified !== 'なし' && art.unverified.trim()){
+    const u = document.createElement('details'); u.className = 'at-unverified';
+    const us = document.createElement('summary');
+    us.textContent = '⚠ 裏が取れなかった事柄(記事には入っていません)';
+    const ub = document.createElement('div'); ub.className='at-unv-body'; ub.textContent = art.unverified;
+    u.appendChild(us); u.appendChild(ub);
+    wrap.appendChild(u);
   }
 
-  /* 本文プレビュー(画像を差し込むと更新される) */
-  const preview = document.createElement('div');
-  preview.className = 'at-preview';
+  /* ===== ③ WordPressへ直接投稿 ===== */
+  const w = document.createElement('div'); w.className = 'at-step';
+  w.innerHTML = '<div class="at-step-label">③ WordPressに直接送る(下書き)</div>';
+  const wBtn = document.createElement('button'); wBtn.className='at-copybtn at-big at-wp';
+  wBtn.textContent = '📤 WordPressに下書きとして投稿';
+  const wMsg = document.createElement('div'); wMsg.className='at-note';
+  wBtn.addEventListener('click', async ()=>{
+    wBtn.disabled = true; wBtn.textContent = '送信中…';
+    wMsg.textContent = '';
+    try{
+      const html = state.isHTML ? sanitizeHTML(state.body) : mdBodyToHTML(state.body);
+      const r = await wpPostDraft(state.title || '(無題)', html, state.eyecatch);
+      wMsg.innerHTML = '✅ 下書きとして投稿しました。<a href="'+r.link+'" target="_blank" rel="noopener">WordPressで確認して公開</a>';
+      wBtn.textContent = '✅ 投稿しました';
+    }catch(e){
+      wMsg.innerHTML = '<b style="color:#C4364F">投稿に失敗:</b> ' + e.message;
+      wBtn.disabled = false; wBtn.textContent = '📤 WordPressに下書きとして投稿';
+    }
+  });
+  w.appendChild(wBtn); w.appendChild(wMsg);
+  const wNote = document.createElement('div'); wNote.className='at-note';
+  wNote.textContent = '※ 設定タブの「WordPress自動投稿」に、サイトURL・ユーザー名・アプリケーションパスワードの入力が必要です。公開はご自身でWordPress側から行います(いきなり公開されません)。';
+  w.appendChild(wNote);
+  wrap.appendChild(w);
+
+  /* ===== 記事プレビュー ===== */
+  const pvLabel = document.createElement('div'); pvLabel.className='at-step-label'; pvLabel.style.marginTop='10px';
+  pvLabel.textContent = '▼ 記事プレビュー(写真を入れるとここに反映されます)';
+  wrap.appendChild(pvLabel);
+  const preview = document.createElement('div'); preview.className = 'at-preview';
   const renderPreview = ()=>{
     renderArticleBody(preview, state);
-    /* チャット上に表示している記事本体も、同じ内容に更新する */
     if(window.LAST_ARTICLE_EL){
       renderArticleBody(window.LAST_ARTICLE_EL, state);
       if(!state.isHTML) window.LAST_ARTICLE_EL.dataset.richsrc = state.body;
     }
   };
   renderPreview();
+  wrap.appendChild(preview);
 
-  /* ===== 写真を選ぶ(候補を並べてチェックで選択) ===== */
+  /* ===== 写真を選ぶ ===== */
   const picker = document.createElement('div'); picker.className = 'photo-picker';
   picker.innerHTML =
     '<div class="pp-head">🖼 記事に入れる写真を選ぶ</div>'
-    + '<div class="pp-explain"><b>アイキャッチ</b>とは、<b>記事の一番上に出る「看板写真」</b>のことです。'
-    + 'ブログ一覧やSNSでシェアされた時に表示される、記事の顔になる画像です。<br>'
-    + '下の候補から<b>使いたい写真にチェック</b>を入れて、一番下のボタンを押すと記事に入ります。</div>';
-
-  /* 検索欄 */
+    + '<div class="pp-explain"><b>アイキャッチ</b>=<b>記事の一番上に出る「看板写真」</b>です。'
+    + '記事の題名から自動で英語キーワードを作って探します。'
+    + '使いたい写真に<b>チェック</b>を入れて、下のボタンを押すと記事に入ります。</div>';
   const searchRow = document.createElement('div'); searchRow.className = 'pp-search';
   const kwInput = document.createElement('input');
   kwInput.type = 'text'; kwInput.className = 'pp-kw';
-  kwInput.placeholder = '写真のキーワード(英語だと沢山出ます。例: soccer stadium)';
+  kwInput.placeholder = 'キーワード(英語推奨: soccer stadium など)';
   const searchBtn = document.createElement('button'); searchBtn.className = 'pp-searchbtn'; searchBtn.textContent = '🔍 探す';
-  searchRow.appendChild(kwInput); searchRow.appendChild(searchBtn);
+  const autoBtn = document.createElement('button'); autoBtn.className = 'pp-searchbtn'; autoBtn.style.background='#5A6B8C';
+  autoBtn.textContent = '🤖 AIに探させる';
+  searchRow.appendChild(kwInput); searchRow.appendChild(searchBtn); searchRow.appendChild(autoBtn);
   picker.appendChild(searchRow);
-
   const ppStatus = document.createElement('div'); ppStatus.className = 'pp-status';
   picker.appendChild(ppStatus);
   const ppGrid = document.createElement('div'); ppGrid.className = 'pp-grid';
   picker.appendChild(ppGrid);
-
-  /* 選択した写真を入れるボタン */
   const ppFoot = document.createElement('div'); ppFoot.className = 'pp-foot';
   const eyeOpt = document.createElement('label'); eyeOpt.className = 'pp-eyeopt';
   const eyeChk = document.createElement('input'); eyeChk.type='checkbox'; eyeChk.checked = true;
   eyeOpt.appendChild(eyeChk);
   eyeOpt.appendChild(document.createTextNode(' 最初の1枚をアイキャッチ(記事の一番上)にする'));
   const insertBtn = document.createElement('button'); insertBtn.className = 'pp-insertbtn';
-  insertBtn.textContent = '✅ 選んだ写真を記事に入れる';
-  insertBtn.disabled = true;
+  insertBtn.textContent = '✅ 選んだ写真を記事に入れる'; insertBtn.disabled = true;
   ppFoot.appendChild(eyeOpt); ppFoot.appendChild(insertBtn);
   picker.appendChild(ppFoot);
   wrap.appendChild(picker);
@@ -3019,74 +3101,161 @@ function attachArticleTools(art, rawReply, boxEl){
       ? '✅ 選んだ写真を記事に入れる'
       : `✅ 選んだ写真${selected.length}枚を記事に入れる`;
   }
-
+  function showImages(imgs, kw){
+    ppStatus.innerHTML = `「${kw}」の候補 <b>${imgs.length}枚</b> — 使いたい写真にチェックを入れてください。写真クリックで拡大。`;
+    imgs.forEach(im=>{
+      const tier = licenseTier(im.license);
+      const jpLabel = {green:'🟢 そのまま使える', gold:'🟡 出典を書けば使える(自動)',
+                       red:'🔴 使用不可(商用NG)', gray:'⚪ 要確認'}[tier.color];
+      const card = document.createElement('div'); card.className = 'pp-card pp-'+tier.color;
+      const imgEl = document.createElement('img');
+      imgEl.src = im.thumb || im.full; imgEl.loading='lazy'; imgEl.alt='';
+      imgEl.addEventListener('error', ()=>{ imgEl.style.display='none'; card.classList.add('pp-noimg'); });
+      imgEl.addEventListener('click', ()=> openFreeImage(im, tier, null));
+      card.appendChild(imgEl);
+      const lic = document.createElement('div'); lic.className='pp-lic'; lic.textContent = jpLabel;
+      card.appendChild(lic);
+      const chkLab = document.createElement('label'); chkLab.className='pp-chk';
+      const chk = document.createElement('input'); chk.type='checkbox';
+      if(tier.color === 'red') chk.disabled = true;
+      chk.addEventListener('change', ()=>{
+        if(chk.checked){ selected.push(im); card.classList.add('pp-selected'); }
+        else{ const i = selected.indexOf(im); if(i>=0) selected.splice(i,1); card.classList.remove('pp-selected'); }
+        refreshInsertBtn();
+      });
+      chkLab.appendChild(chk);
+      chkLab.appendChild(document.createTextNode(tier.color==='red' ? ' 使えません' : ' この写真を使う'));
+      card.appendChild(chkLab);
+      ppGrid.appendChild(card);
+    });
+  }
   async function doSearch(kw){
     ppStatus.textContent = '🔍 「' + kw + '」で無料写真を探しています…';
-    ppGrid.innerHTML = '';
-    selected.length = 0; refreshInsertBtn();
+    ppGrid.innerHTML = ''; selected.length = 0; refreshInsertBtn();
     try{
       const imgs = await searchFreeImages(kw);
       if(!imgs.length){
-        ppStatus.innerHTML = '<b>見つかりませんでした。</b> 英語のキーワード(例: soccer, stadium, trophy)でもう一度お試しください。';
-        return;
+        ppStatus.innerHTML = `「${kw}」では<b>見つかりませんでした。</b> 「🤖 AIに探させる」を押すと、別の英語キーワードで自動的に探し直します。`;
+        return false;
       }
-      ppStatus.innerHTML = `候補 <b>${imgs.length}枚</b> — 使いたい写真にチェックを入れてください。写真をクリックすると大きく見られます。`;
-      imgs.forEach(im=>{
-        const tier = licenseTier(im.license);
-        const jpLabel = {green:'🟢 そのまま使える', gold:'🟡 出典を書けば使える(自動で書きます)',
-                         red:'🔴 使用不可(商用NG)', gray:'⚪ 要確認'}[tier.color];
-        const card = document.createElement('div'); card.className = 'pp-card pp-'+tier.color;
-        const imgEl = document.createElement('img');
-        imgEl.src = im.thumb || im.full; imgEl.loading='lazy'; imgEl.alt='';
-        imgEl.addEventListener('error', ()=>{ imgEl.style.display='none'; card.classList.add('pp-noimg'); });
-        imgEl.addEventListener('click', ()=> openFreeImage(im, tier, null));
-        card.appendChild(imgEl);
-        const lic = document.createElement('div'); lic.className='pp-lic'; lic.textContent = jpLabel;
-        card.appendChild(lic);
-        const chkLab = document.createElement('label'); chkLab.className='pp-chk';
-        const chk = document.createElement('input'); chk.type='checkbox';
-        if(tier.color === 'red'){ chk.disabled = true; }
-        chk.addEventListener('change', ()=>{
-          if(chk.checked){ selected.push(im); card.classList.add('pp-selected'); }
-          else{ const i = selected.indexOf(im); if(i>=0) selected.splice(i,1); card.classList.remove('pp-selected'); }
-          refreshInsertBtn();
-        });
-        chkLab.appendChild(chk);
-        chkLab.appendChild(document.createTextNode(tier.color==='red' ? ' 使えません' : ' この写真を使う'));
-        card.appendChild(chkLab);
-        ppGrid.appendChild(card);
-      });
+      showImages(imgs, kw);
+      return true;
     }catch(e){
-      ppStatus.innerHTML = '<b style="color:#C4364F">写真の検索に失敗しました:</b> ' + e.message
-        + '<br>広告ブロッカーや社内ネットワークが通信を遮断している可能性があります。';
+      ppStatus.innerHTML = '<b style="color:#C4364F">写真の検索に失敗:</b> ' + e.message
+        + '<br>広告ブロッカーやネットワークが通信を遮断している可能性があります。';
+      return false;
     }
   }
-  searchBtn.addEventListener('click', ()=>{
-    const kw = kwInput.value.trim();
-    if(!kw){ kwInput.focus(); return; }
-    doSearch(kw);
-  });
+  /* AIに英語キーワードを作らせて、見つかるまで順に試す */
+  async function autoSearch(){
+    autoBtn.disabled = true; autoBtn.textContent = '考え中…';
+    ppStatus.textContent = '🤖 記事の内容から、写真を探すのに適した英語キーワードをAIが考えています…';
+    ppGrid.innerHTML = '';
+    try{
+      const kws = await suggestPhotoKeywords(state.title, state.body);
+      let found = false;
+      for(const kw of kws){
+        kwInput.value = kw;
+        ppStatus.textContent = '🔍 「' + kw + '」で探しています…';
+        const imgs = await searchFreeImages(kw).catch(()=>[]);
+        if(imgs.length){ ppGrid.innerHTML=''; selected.length=0; refreshInsertBtn(); showImages(imgs, kw); found = true; break; }
+      }
+      if(!found){
+        ppStatus.innerHTML = '<b>該当する無料写真が見つかりませんでした。</b><br>試したキーワード: '
+          + kws.join(' / ') + '<br>世界中の無料素材(Openverse)を検索しましたが、この題材に合う画像がありませんでした。'
+          + '上の欄に別のキーワードを入れて手動で探すこともできます。';
+      }
+    }catch(e){
+      ppStatus.innerHTML = '<b style="color:#C4364F">失敗:</b> ' + e.message;
+    }
+    autoBtn.disabled = false; autoBtn.textContent = '🤖 AIに探させる';
+  }
+  searchBtn.addEventListener('click', ()=>{ const kw = kwInput.value.trim(); if(kw) doSearch(kw); else kwInput.focus(); });
+  autoBtn.addEventListener('click', autoSearch);
   kwInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); searchBtn.click(); } });
-
   insertBtn.addEventListener('click', ()=>{
     if(!selected.length) return;
     insertSelectedImages(state, selected.slice(), eyeChk.checked, renderPreview);
-    /* 入れ終わったらチェックを外す */
     ppGrid.querySelectorAll('input[type=checkbox]').forEach(c=>{ c.checked=false; });
     ppGrid.querySelectorAll('.pp-card').forEach(c=>c.classList.remove('pp-selected'));
     selected.length = 0; refreshInsertBtn();
   });
 
-  /* 記事の題名から自動で最初の検索を実行 */
-  (function autoFirstSearch(){
-    const t = (state.title||'').trim();
-    kwInput.value = t;
-    if(t) doSearch(t);
-    else ppStatus.textContent = 'キーワードを入れて「探す」を押してください。';
-  })();
-
   box.appendChild(wrap);
   box.scrollTop = box.scrollHeight;
+  /* 最初は自動でAIにキーワードを作らせて探す */
+  autoSearch();
+}
+
+/* 記事内容から、写真検索に適した英語キーワードをAIに作らせる */
+async function suggestPhotoKeywords(title, body){
+  const c = getConf();
+  const src = (title || '') + '\n' + String(body||'').slice(0, 600);
+  const sys = 'あなたは写真素材の検索担当。日本語の記事から、無料写真サイト(Openverse)で実際にヒットしやすい英語キーワードを作る。';
+  const prompt = `次の記事に合う写真を探したい。\n\n${src}\n\n`
+    + `無料写真サイトで実際にヒットしやすい、一般的で具体的な英語キーワードを5つ挙げよ。\n`
+    + `固有名詞(選手名・大会名・チーム名)は権利画像が無いのでほぼヒットしない。避けて、一般的な情景の語にせよ。\n`
+    + `例: 良い→"soccer stadium night" "football trophy" "cheering crowd" / 悪い→"Lamine Yamal" "FIFA World Cup 2026"\n`
+    + `次のJSONのみ出力(説明不要):\n{"keywords":["kw1","kw2","kw3","kw4","kw5"]}`;
+  try{
+    let raw = await callEngine(c.seats.jupiter, 'eco', sys, [{role:'user',content:prompt}], 300, false);
+    raw = raw.replace(/```json|```/g,'').trim();
+    const r = JSON.parse(raw);
+    if(Array.isArray(r.keywords) && r.keywords.length) return r.keywords.slice(0,5);
+  }catch(e){}
+  /* AIが失敗した場合の予備キーワード */
+  return ['sports stadium','soccer ball','celebration crowd','trophy','football field'];
+}
+
+/* ===== WordPress 自動投稿(下書き) ===== */
+function wpConf(){
+  const c = getConf();
+  return c.wp || {url:'', user:'', pass:''};
+}
+async function wpPostDraft(title, html, eyecatchImg){
+  const w = wpConf();
+  if(!w.url || !w.user || !w.pass){
+    throw new Error('設定タブの「WordPress自動投稿」に、サイトURL・ユーザー名・アプリケーションパスワードを入力してください');
+  }
+  const base = w.url.replace(/\/+$/,'');
+  const auth = 'Basic ' + btoa(unescape(encodeURIComponent(w.user + ':' + w.pass)));
+  let featuredId = 0;
+  /* アイキャッチ画像があればメディアに登録を試みる(失敗しても投稿は続行) */
+  if(eyecatchImg && eyecatchImg.full){
+    try{ featuredId = await wpUploadMedia(base, auth, eyecatchImg); }catch(e){ featuredId = 0; }
+  }
+  const bodyObj = {title, content:html, status:'draft'};
+  if(featuredId) bodyObj.featured_media = featuredId;
+  const res = await fetch(base + '/wp-json/wp/v2/posts', {
+    method:'POST',
+    headers:{'Content-Type':'application/json', 'Authorization':auth},
+    body: JSON.stringify(bodyObj)
+  });
+  if(!res.ok){
+    let msg = 'HTTP ' + res.status;
+    try{ const j = await res.json(); if(j && j.message) msg += ' — ' + j.message; }catch(e){}
+    if(res.status === 401) msg += '(ユーザー名かアプリケーションパスワードが違う可能性)';
+    if(res.status === 403) msg += '(権限不足、またはサーバーがAuthorizationヘッダーを遮断している可能性)';
+    throw new Error(msg);
+  }
+  const data = await res.json();
+  return {link: data.link || (base + '/wp-admin/post.php?post=' + data.id + '&action=edit'), id: data.id, featured: !!featuredId};
+}
+/* 画像をWordPressのメディアに登録してアイキャッチ用IDを得る */
+async function wpUploadMedia(base, auth, im){
+  const imgRes = await fetch(im.full);           /* 画像を取得(CORS不可なら失敗) */
+  if(!imgRes.ok) throw new Error('画像取得失敗');
+  const blob = await imgRes.blob();
+  const ext = (blob.type.split('/')[1] || 'jpg').replace('jpeg','jpg');
+  const name = 'capico-' + Date.now() + '.' + ext;
+  const res = await fetch(base + '/wp-json/wp/v2/media', {
+    method:'POST',
+    headers:{'Authorization':auth, 'Content-Disposition':'attachment; filename="'+name+'"', 'Content-Type':blob.type||'image/jpeg'},
+    body: blob
+  });
+  if(!res.ok) throw new Error('メディア登録失敗 HTTP ' + res.status);
+  const data = await res.json();
+  return data.id;
 }
 
 /* 画像1枚分のMarkdown(またはHTML)を作る */
@@ -4435,22 +4604,26 @@ function isArticleRequest(text){
 /* 記事モード時に議長へ渡す追加指示: 題名と本文を分離させる */
 function articleRule(){
   return `\n\n=== 投稿用記事モード(絶対厳守) ===
-主宰は「公開・投稿する記事」を求めている。主宰はHTMLを読めないし、読む必要もない。
-WordPressへの変換はシステムが自動で行うので、あなたは変換を一切気にしなくてよい。
+主宰は「そのまま公開できる記事」を求めている。主宰はHTMLを読めないし、読む必要もない。
+WordPressへの変換はシステムが自動で行うので、変換を一切気にしなくてよい。
 
 【絶対禁止】
-・HTMLタグ(<p> <h2> <table> <div> <article> style= など)を書くこと ← 厳禁
+・HTMLタグ(<p> <h2> <table> <div> style= など)を書くこと ← 厳禁
 ・コードブロック(バッククォート3つで囲む書き方)で記事を出すこと ← 厳禁
-・貼り付け手順やエディタの使い方を説明すること ← 不要(システムが処理する)
+・貼り付け手順やエディタの使い方を説明すること ← 不要
+・本文の中に「(確認済)」「(未確認)」「(要確認)」等の検証メモを書くこと ← 厳禁
+  (読者が読む記事にそんな表記があってはならない。確認できた事実だけを普通に書け。
+   確認できなかった事実は、記事本文には一切書くな。書きたければ下の【未確認事項】に回せ)
 
 【出力形式】必ずこの形だけで書け:
 【題名】
 (30字前後の魅力的なタイトルを1行)
 【本文】
-(本文をここに。見出しは ## 、強調は ** 、箇条書きは - 、表はMarkdownの表)
+(そのまま公開できる完成した記事。見出しは ## 、強調は ** 、箇条書きは - 、表はMarkdownの表)
+【未確認事項】
+(裏が取れなかった事柄があればここに箇条書き。無ければ「なし」。ここは記事には含まれない)
 
 【その他】
-・事実(日程・数値・人名・結果)はWeb検索で確認できたものだけ断定し、未確認は「(要確認)」と明記
 ・画像は自分で貼らない(著作権のため)。システムが安全なフリー素材を提示し、自動で差し込む`;
 }
 /* 回答から題名と本文を分離 */
@@ -4473,7 +4646,18 @@ function splitArticle(text){
   const mTitle = t.match(/【題名】\s*\n?([^\n]+)/);
   const mBody = t.match(/【本文】\s*\n?([\s\S]*)$/);
   if(mTitle && mBody){
-    return {title: mTitle[1].trim(), body: mBody[1].trim(), isArticle:true, isHTML:false};
+    let bodyText = mBody[1];
+    let unverified = '';
+    const mUn = bodyText.match(/【未確認事項】\s*\n?([\s\S]*)$/);
+    if(mUn){
+      unverified = mUn[1].trim();
+      bodyText = bodyText.slice(0, bodyText.indexOf('【未確認事項】'));
+    }
+    /* 念のため、本文に残った検証メモを除去 */
+    bodyText = bodyText
+      .replace(/[（(]\s*(確認済|未確認|要確認)[^）)]*[）)]/g, '')
+      .replace(/\*\*[（(]\s*(確認済|未確認|要確認)[^）)]*[）)]\*\*/g, '');
+    return {title: mTitle[1].trim(), body: bodyText.trim(), unverified, isArticle:true, isHTML:false};
   }
   return {title:'', body:t, isArticle:false, isHTML:false};
 }
@@ -4713,6 +4897,47 @@ function renderRich(el, text){
     }
   });
 }
+
+/* --- WordPress自動投稿の設定 --- */
+(function(){
+  const c = getConf();
+  const w = c.wp || {};
+  if($('wp-url')) $('wp-url').value = w.url || '';
+  if($('wp-user')) $('wp-user').value = w.user || '';
+  if($('wp-pass')) $('wp-pass').value = w.pass || '';
+})();
+if($('btn-wp-save')) $('btn-wp-save').addEventListener('click', ()=>{
+  const c = getConf();
+  c.wp = {url: $('wp-url').value.trim(), user: $('wp-user').value.trim(), pass: $('wp-pass').value.trim()};
+  localStorage.setItem(CONF_KEY, JSON.stringify(c));
+  $('wp-status').textContent = '✅ 保存しました(この端末のみ)';
+});
+if($('btn-wp-test')) $('btn-wp-test').addEventListener('click', async ()=>{
+  const st = $('wp-status');
+  st.textContent = '接続を確認しています…';
+  const c = getConf();
+  c.wp = {url: $('wp-url').value.trim(), user: $('wp-user').value.trim(), pass: $('wp-pass').value.trim()};
+  localStorage.setItem(CONF_KEY, JSON.stringify(c));
+  const w = c.wp;
+  if(!w.url || !w.user || !w.pass){ st.textContent = '⚠ 3項目すべて入力してください'; return; }
+  try{
+    const base = w.url.replace(/\/+$/,'');
+    const auth = 'Basic ' + btoa(unescape(encodeURIComponent(w.user + ':' + w.pass)));
+    const res = await fetch(base + '/wp-json/wp/v2/users/me', {headers:{'Authorization':auth}});
+    if(!res.ok){
+      let m = 'HTTP ' + res.status;
+      if(res.status===401) m += ' — ユーザー名かアプリケーションパスワードが違います';
+      if(res.status===403) m += ' — サーバーがAuthorizationヘッダーを遮断している可能性があります(エックスサーバーの場合、.htaccessの設定が必要なことがあります)';
+      if(res.status===404) m += ' — サイトURLが違うか、REST APIが無効です';
+      throw new Error(m);
+    }
+    const me = await res.json();
+    st.innerHTML = '✅ 接続成功: <b>' + (me.name || me.slug) + '</b> として投稿できます';
+  }catch(e){
+    st.innerHTML = '❌ 接続失敗: ' + e.message
+      + '<br>(通信自体がブロックされる場合は「CORS」の制限が原因のこともあります)';
+  }
+});
 
 /* --- 要綱モーダルの操作 --- */
 $('btn-digest-quick').addEventListener('click', ()=> digestNow('巻物'));
