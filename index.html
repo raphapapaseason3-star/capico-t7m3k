@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Capitoline Council — CapiCo v3.8</title>
+<title>Capitoline Council — CapiCo v3.9</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <!-- PowerPoint生成(JSZipを内包) -->
@@ -413,6 +413,14 @@
   .fid-credit{background:#F3EFE2;border:1px solid var(--edge);border-radius:5px;padding:8px 10px;font-size:13px;
     font-family:var(--mono);word-break:break-all;margin:4px 0}
   .fid-actions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  /* ===== スクロールバーを見やすく ===== */
+  .viewer-body::-webkit-scrollbar, .dg-body::-webkit-scrollbar,
+  .chat-box::-webkit-scrollbar, .at-preview::-webkit-scrollbar{width:12px}
+  .viewer-body::-webkit-scrollbar-thumb, .dg-body::-webkit-scrollbar-thumb,
+  .chat-box::-webkit-scrollbar-thumb, .at-preview::-webkit-scrollbar-thumb{
+    background:var(--gold);border-radius:6px;border:2px solid transparent;background-clip:content-box}
+  .viewer-body::-webkit-scrollbar-track, .dg-body::-webkit-scrollbar-track,
+  .chat-box::-webkit-scrollbar-track, .at-preview::-webkit-scrollbar-track{background:rgba(0,0,0,.06);border-radius:6px}
   /* ===== コピー行(共通部品) ===== */
   .copy-row{display:flex;align-items:center;gap:8px;margin:6px 0;background:#F7F3E8;
     border:1px solid var(--edge);border-radius:6px;padding:6px 8px;flex-wrap:wrap}
@@ -478,7 +486,7 @@
   .dg-head .dgtitle{font-size:15px;font-weight:bold;color:var(--gold);flex:1;min-width:150px}
   .dg-head .dgclose{background:#fff;border:1px solid var(--ng);color:var(--ng);border-radius:4px;
     cursor:pointer;font-size:13px;padding:5px 11px;font-weight:bold}
-  .dg-body{padding:10px 14px;overflow-y:auto;flex:1;color:var(--ink);font-size:14.5px;line-height:1.6}
+  .dg-body{padding:10px 14px;overflow-y:auto;flex:1 1 auto;min-height:0;color:var(--ink);font-size:14.5px;line-height:1.6}
   .dg-body table.rich-table{font-size:13.5px}
   .dg-foot{display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid var(--edge);
     background:var(--panel-2);flex-wrap:wrap}
@@ -486,7 +494,7 @@
   .phase-label.collapsible{display:flex;align-items:center;justify-content:space-between;gap:10px}
   .focus-btn{margin:0;padding:5px 12px;font-size:13px;border-color:var(--gold);color:var(--gold);font-weight:bold;white-space:nowrap}
   .thread-wrap{position:relative}
-  #council-thread{min-height:200px;max-height:46vh}
+  #council-thread{min-height:200px;max-height:46vh;overflow-y:auto !important}
   .scroll-bottom-btn{position:absolute;right:12px;bottom:12px;z-index:5;
     background:var(--gold);color:#fff;border:none;border-radius:20px;padding:7px 14px;
     font-size:13px;font-weight:bold;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.28);
@@ -500,7 +508,7 @@
   body.focus-council #phase3-label, body.focus-council .ruling,
   body.focus-council #screen-council > h2,
   body.focus-council .sanctum{display:none !important}
-  body.focus-council #council-thread{max-height:74vh;min-height:60vh}
+  body.focus-council #council-thread{max-height:74vh;min-height:60vh;overflow-y:auto !important}
   body.focus-council #phase4-label{margin-top:0}
   body.focus-council .focus-btn{background:var(--gold);color:#fff}
 
@@ -541,7 +549,7 @@
     font-size:15px;padding:6px 14px;color:var(--ink)}
   .viewer-head .vclose{border-color:var(--ng);color:var(--ng);font-weight:bold}
   .viewer-body{padding:22px 30px;overflow-y:auto;font-size:20px;line-height:1.9;
-    word-break:break-word;color:var(--ink);flex:1}
+    word-break:break-word;color:var(--ink);flex:1 1 auto;min-height:0}
   .viewer-body > div{white-space:pre-wrap}
   .viewer-body table.rich-table{font-size:0.85em;white-space:normal;margin:14px 0}
   .viewer-body .rich-chart{height:340px;white-space:normal;margin:16px 0}
@@ -553,7 +561,7 @@
 <header>
   <div class="brand">
     <span class="en">CAPITOLINE COUNCIL</span>
-    <span class="jp">カピトリーノ評議会 — CapiCo v3.8 / Private AI Agents Company</span>
+    <span class="jp">カピトリーノ評議会 — CapiCo v3.9 / Private AI Agents Company</span>
   </div>
   <div class="chair-badge" id="chair-badge">現議長: <b>—</b></div>
   <div class="mem-badge" id="mem-badge">記憶: 未読込</div>
@@ -985,7 +993,7 @@
 </main>
 
 <input type="file" id="doc-file-input" multiple hidden accept=".docx,.doc,.xlsx,.xls,.xlsm,.pptx,.ppt,.pdf,.md,.txt,.csv,.json,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tif,.tiff,.heic,.heif">
-<footer>CAPITOLINE COUNCIL v3.8 — EYECATCH + COPY BUTTONS EVERYWHERE</footer>
+<footer>CAPITOLINE COUNCIL v3.9 — SCROLL FIX (FLEXBOX min-height)</footer>
 
 <div id="dg-modal" role="dialog" aria-modal="true">
   <div class="dg-card">
