@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Capitoline Council — CapiCo v3.7</title>
+<title>Capitoline Council — CapiCo v3.8</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <!-- PowerPoint生成(JSZipを内包) -->
@@ -413,6 +413,23 @@
   .fid-credit{background:#F3EFE2;border:1px solid var(--edge);border-radius:5px;padding:8px 10px;font-size:13px;
     font-family:var(--mono);word-break:break-all;margin:4px 0}
   .fid-actions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  /* ===== コピー行(共通部品) ===== */
+  .copy-row{display:flex;align-items:center;gap:8px;margin:6px 0;background:#F7F3E8;
+    border:1px solid var(--edge);border-radius:6px;padding:6px 8px;flex-wrap:wrap}
+  .copy-row-label{font-size:12px;font-weight:bold;color:var(--ink-dim);white-space:nowrap}
+  .copy-row-value{flex:1;min-width:100px;font-size:12.5px;font-family:var(--mono);
+    word-break:break-all;color:var(--ink)}
+  .copy-row-btn{background:var(--gold);color:#fff;border:none;border-radius:5px;
+    padding:5px 12px;font-size:12px;font-weight:bold;cursor:pointer;white-space:nowrap}
+  .copy-row-btn:hover{filter:brightness(1.08)}
+  /* ===== アイキャッチ ===== */
+  .at-eyecatch{background:#FFFBF0;border:1px solid var(--gold);border-radius:6px;padding:10px 12px;margin:8px 0}
+  .at-eyehead{font-weight:bold;color:var(--gold);font-size:13px;margin-bottom:4px}
+  .eyecatch-chosen{border:2px solid var(--gold);border-radius:6px;padding:10px;margin-top:6px;background:#fff}
+  .eyecatch-chosen.fimg-green{border-color:#2E9E4F}
+  .eyecatch-chosen.fimg-gold{border-color:#C9A227}
+  .eyecatch-chosen.fimg-red{border-color:#C4364F}
+  .ec-row{margin:4px 0}
   /* ===== 記事プレビュー ===== */
   .at-preview{background:#fff;border:1px solid var(--edge);border-radius:6px;padding:12px 14px;
     margin:4px 0 8px;max-height:340px;overflow-y:auto;font-size:14px;line-height:1.7}
@@ -536,7 +553,7 @@
 <header>
   <div class="brand">
     <span class="en">CAPITOLINE COUNCIL</span>
-    <span class="jp">カピトリーノ評議会 — CapiCo v3.7 / Private AI Agents Company</span>
+    <span class="jp">カピトリーノ評議会 — CapiCo v3.8 / Private AI Agents Company</span>
   </div>
   <div class="chair-badge" id="chair-badge">現議長: <b>—</b></div>
   <div class="mem-badge" id="mem-badge">記憶: 未読込</div>
@@ -968,7 +985,7 @@
 </main>
 
 <input type="file" id="doc-file-input" multiple hidden accept=".docx,.doc,.xlsx,.xls,.xlsm,.pptx,.ppt,.pdf,.md,.txt,.csv,.json,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tif,.tiff,.heic,.heif">
-<footer>CAPITOLINE COUNCIL v3.7 — AUTO-EMBED IMAGES INTO ARTICLE</footer>
+<footer>CAPITOLINE COUNCIL v3.8 — EYECATCH + COPY BUTTONS EVERYWHERE</footer>
 
 <div id="dg-modal" role="dialog" aria-modal="true">
   <div class="dg-card">
@@ -2730,6 +2747,25 @@ function renderMsg(role, text, isErr, scrollDown){
 }
 /* 検証結果を折りたたみで直前のAI回答に添付 */
 /* 投稿用記事のツール: 題名/本文の分離コピー + フリー素材提示 */
+/* コピー用の共通部品: ラベル + 値 + 横にコピーボタン(全体で使い回す) */
+function copyRow(label, value){
+  const row = document.createElement('div');
+  row.className = 'copy-row';
+  const lab = document.createElement('span'); lab.className='copy-row-label'; lab.textContent = label + ':';
+  const val = document.createElement('span'); val.className='copy-row-value'; val.textContent = value;
+  const btn = document.createElement('button'); btn.className='copy-row-btn'; btn.textContent='📋 コピー';
+  btn.addEventListener('click', async ()=>{
+    try{ await navigator.clipboard.writeText(value); btn.textContent='✅ コピー済'; setTimeout(()=>btn.textContent='📋 コピー',1500); }
+    catch(e){ /* フォールバック */
+      const ta=document.createElement('textarea'); ta.value=value; document.body.appendChild(ta); ta.select();
+      try{document.execCommand('copy'); btn.textContent='✅ コピー済'; setTimeout(()=>btn.textContent='📋 コピー',1500);}catch(_){}
+      ta.remove();
+    }
+  });
+  row.appendChild(lab); row.appendChild(val); row.appendChild(btn);
+  return row;
+}
+
 function attachArticleTools(art, rawReply){
   const box = $('chat-box');
   const wrap = document.createElement('div');
@@ -2757,6 +2793,70 @@ function attachArticleTools(art, rawReply){
     else renderRich(preview, state.body);
   };
   renderPreview();
+
+  /* ===== アイキャッチ(記事トップ画像)セクション ===== */
+  const eyeSec = document.createElement('div'); eyeSec.className = 'at-eyecatch';
+  eyeSec.innerHTML = '<div class="at-eyehead">🖼 アイキャッチ画像(記事の一番上に表示する画像)</div>'
+    + '<div class="at-note">記事の題名から自動でフリー素材を提案します。気に入ったものをクリック→「この画像を使う」で、画像URLとクレジットをコピーできます。</div>';
+  const eyeGrid = document.createElement('div'); eyeGrid.className = 'free-img-grid';
+  const eyeStatus = document.createElement('div'); eyeStatus.className = 'at-note';
+  eyeSec.appendChild(eyeStatus);
+  eyeSec.appendChild(eyeGrid);
+  /* 再検索ボタン(キーワードを変えて探す) */
+  const eyeBtn = document.createElement('button'); eyeBtn.className='msg-copy-btn'; eyeBtn.textContent='🔍 別のキーワードで探す';
+  eyeBtn.addEventListener('click', ()=> loadEyecatch(true));
+  eyeSec.appendChild(eyeBtn);
+  wrap.appendChild(eyeSec);
+
+  async function loadEyecatch(ask){
+    let kw = state.title || state.body.slice(0,30);
+    if(ask){
+      const input = prompt('アイキャッチを探すキーワード(英語推奨。例: soccer trophy, stadium night)', kw);
+      if(!input) return;
+      kw = input;
+    }
+    eyeStatus.textContent = '🔍 「'+kw+'」でフリー素材を検索中…';
+    eyeGrid.innerHTML = '';
+    try{
+      const imgs = await searchFreeImages(kw);
+      if(!imgs.length){ eyeStatus.textContent = '見つかりませんでした。「🔍別のキーワードで探す」で英語キーワードをお試しください。'; return; }
+      eyeStatus.textContent = '候補' + imgs.length + '件(緑=クレジット不要 / 金=クレジット要 / 赤=商用不可)。クリックで詳細。';
+      imgs.forEach(im=>{
+        const tier = licenseTier(im.license);
+        const card = document.createElement('div'); card.className = 'fimg fimg-'+tier.color;
+        card.innerHTML = `<img src="${im.thumb}" alt="" loading="lazy"><div class="fimg-lic">${im.license||'?'}</div>`;
+        card.title = tier.label;
+        card.addEventListener('click', ()=> openFreeImage(im, tier, (chosen)=> useAsEyecatch(chosen)));
+        eyeGrid.appendChild(card);
+      });
+    }catch(e){ eyeStatus.textContent = '画像検索に失敗: ' + e.message; }
+  }
+  /* アイキャッチとして採用(URL・クレジットをコピーできる形で表示) */
+  function useAsEyecatch(im){
+    const tier = licenseTier(im.license);
+    state.eyecatch = im;
+    eyeStatus.innerHTML = '';
+    const box2 = document.createElement('div'); box2.className = 'eyecatch-chosen fimg-'+tier.color;
+    const credit = im.attribution || `"${im.title}" by ${im.creator} (${im.license})`;
+    box2.innerHTML = `<div class="ec-row"><b>✅ アイキャッチに採用しました</b></div>
+      <img src="${im.thumb}" style="max-width:200px;border-radius:6px;margin:6px 0">`;
+    /* 画像URLのコピー行 */
+    box2.appendChild(copyRow('画像URL', im.full));
+    if(tier.color === 'gold' || tier.color === 'red'){
+      box2.appendChild(copyRow('クレジット表記', credit));
+    }
+    const openA = document.createElement('a');
+    openA.href = im.foreignUrl; openA.target='_blank'; openA.rel='noopener';
+    openA.className='msg-copy-btn'; openA.style.textDecoration='none'; openA.textContent='🔗 元ページで画像を保存';
+    box2.appendChild(openA);
+    if(tier.color==='red'){
+      const w = document.createElement('div'); w.className='at-note'; w.style.color='#C4364F';
+      w.textContent='⚠ この画像は商用不可/改変不可の制限があります。収益ブログでの使用は避けてください。';
+      box2.appendChild(w);
+    }
+    eyeStatus.appendChild(box2);
+  }
+  loadEyecatch(false); /* 記事作成時に自動で提案 */
 
   /* 本文コピー */
   const b = document.createElement('div'); b.className = 'at-row';
@@ -2880,15 +2980,24 @@ function openFreeImage(im, tier, onUse){
       <div class="fid-row"><b>ライセンス:</b> ${im.license||'不明'} <span class="fid-tier">${colorLabel}</span></div>
       <div class="fid-row"><b>作者:</b> ${im.creator||'不明'}</div>
       <div class="fid-row"><b>出典:</b> <a href="${im.foreignUrl}" target="_blank" rel="noopener">${im.source||im.foreignUrl}</a></div>
+      <div id="fid-copyzone"></div>
       <div class="fid-actions">
         <button class="btn gold" id="fid-use" style="margin:0;font-size:15px;padding:9px 18px">✅ この画像を使う(本文に差し込む)</button>
-        <a class="btn ghost" href="${im.foreignUrl}" target="_blank" rel="noopener" style="margin:0;text-decoration:none">🔗 元ページで確認</a>
+        <a class="btn ghost" href="${im.foreignUrl}" target="_blank" rel="noopener" style="margin:0;text-decoration:none">🔗 元ページで確認して画像を保存</a>
       </div>
       <div class="at-note">「この画像を使う」を押すと、本文の適切な位置に自動で差し込まれます。${(tier.color==='gold'||tier.color==='red')?'クレジット表記も一緒に挿入されます。':''}${tier.color==='red'?' ⚠この画像は商用不可/改変不可の制限があります。収益化ブログでの使用は避けてください。':''}</div>
     </div>`;
   applyVSize();
   $('viewer').classList.add('open');
   $('vbody').scrollTop = 0;
+  /* コピーボタン付きで画像URL・クレジットを表示 */
+  const cz = document.getElementById('fid-copyzone');
+  if(cz){
+    cz.appendChild(copyRow('画像URL', im.full));
+    if(tier.color === 'gold' || tier.color === 'red'){
+      cz.appendChild(copyRow('クレジット表記', credit));
+    }
+  }
   const useBtn = document.getElementById('fid-use');
   if(useBtn) useBtn.addEventListener('click', ()=>{
     $('viewer').classList.remove('open');
