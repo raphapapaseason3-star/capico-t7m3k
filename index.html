@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Capitoline Council — CapiCo v4.4</title>
+<title>Capitoline Council — CapiCo v4.5</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <!-- PowerPoint生成(JSZipを内包) -->
@@ -554,9 +554,9 @@
   table.rich-table th{background:var(--gold-soft);color:var(--ink);font-weight:bold;white-space:nowrap}
   table.rich-table tr:nth-child(even) td{background:var(--panel-2)}
   table.rich-table td{color:var(--ink)}
-  .rich-chart{position:relative;height:215px;margin:8px 0;padding:6px 8px;background:#fff;
+  .rich-chart{position:relative;height:158px;margin:6px 0;padding:4px 6px;background:#fff;
     border:1px solid var(--edge);border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
-  @media(max-width:560px){.rich-chart{height:185px}}
+  @media(max-width:560px){.rich-chart{height:140px}}
   /* ===== 中断・再開 ===== */
   .btn.stopbtn{background:var(--ng);margin-left:8px}
   .btn.stopbtn:hover{filter:brightness(1.1)}
@@ -640,7 +640,7 @@
     word-break:break-word;color:var(--ink);flex:1 1 auto;min-height:0}
   .viewer-body > div{white-space:pre-wrap}
   .viewer-body table.rich-table{font-size:0.85em;white-space:normal;margin:14px 0}
-  .viewer-body .rich-chart{height:340px;white-space:normal;margin:16px 0}
+  .viewer-body .rich-chart{height:230px;white-space:normal;margin:12px 0}
   .viewer-body img{max-width:100%;height:auto;border-radius:6px;margin:10px 0}
 </style>
 </head>
@@ -649,7 +649,7 @@
 <header>
   <div class="brand">
     <span class="en">CAPITOLINE COUNCIL</span>
-    <span class="jp">カピトリーノ評議会 — CapiCo v4.4 / Private AI Agents Company</span>
+    <span class="jp">カピトリーノ評議会 — CapiCo v4.5 / Private AI Agents Company</span>
   </div>
   <div class="chair-badge" id="chair-badge">現議長: <b>—</b></div>
   <div class="mem-badge" id="mem-badge">記憶: 未読込</div>
@@ -1098,7 +1098,7 @@
 </main>
 
 <input type="file" id="doc-file-input" multiple hidden accept=".docx,.doc,.xlsx,.xls,.xlsm,.pptx,.ppt,.pdf,.md,.txt,.csv,.json,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tif,.tiff,.heic,.heif">
-<footer>CAPITOLINE COUNCIL v4.4 — WP AUTO-POST / AI PHOTO SEARCH / CLEAN BODY</footer>
+<footer>CAPITOLINE COUNCIL v4.5 — COMPACT CHARTS</footer>
 
 <div id="dg-modal" role="dialog" aria-modal="true">
   <div class="dg-card">
@@ -4720,7 +4720,14 @@ function chartRule(){
 {"type":"bar","title":"タイトル","labels":["A","B","C"],"datasets":[{"label":"系列名","data":[10,20,30]}]}
 \`\`\`
 typeは bar(棒) / line(折れ線) / pie(円) / doughnut(ドーナツ) から選ぶ。datasetsは複数可(比較時)。
-データが推測・仮定を含む場合は、その旨を表やグラフの下に明記せよ。図表にすべきデータが無い場合は無理に使わなくてよい。`;
+データが推測・仮定を含む場合は、その旨を表やグラフの下に明記せよ。図表にすべきデータが無い場合は無理に使わなくてよい。
+
+=== グラフを使う判断(重要) ===
+グラフは場所を取る。得られる情報が少ないのにグラフにするのは無駄である。
+・データが3個以下 → グラフにせず「表」だけで示せ
+・単純な2値の比較(A対B) → 表だけで十分
+・推移(4点以上)、内訳(4項目以上)、多系列の比較 → グラフが有効
+グラフを使う場合も、系列や項目を欲張らず、要点が一目で分かる最小限に絞れ。`;
 }
 /* テキストを [文章 / 表 / グラフ] に分解 */
 function splitRich(text){
@@ -4797,11 +4804,12 @@ function buildChart(spec){
       ? (spec.labels||[]).map((_,k)=>CHART_COLORS[k%CHART_COLORS.length])
       : CHART_COLORS[i%CHART_COLORS.length],
     borderColor: isPie ? '#fff' : CHART_COLORS[i%CHART_COLORS.length],
-    borderWidth: 2,
-    maxBarThickness: 26,
+    borderWidth: isPie ? 1.5 : 0,
+    maxBarThickness: 18,     /* 棒は細く */
     fill: false,
     tension: 0.25,
-    pointRadius: 2.5
+    pointRadius: 2,
+    borderRadius: 2
   }));
   setTimeout(()=>{
     try{
@@ -4810,18 +4818,21 @@ function buildChart(spec){
         data:{labels: spec.labels||[], datasets},
         options:{
           responsive:true, maintainAspectRatio:false,
-          layout:{padding:{top:2,right:4,bottom:0,left:0}},
-          /* バーはスリムに */
-          barPercentage:0.55, categoryPercentage:0.6,
+          layout:{padding:{top:1,right:2,bottom:0,left:0}},
+          /* 棒は細く、比較対象どうしは近づける(無駄な余白を作らない) */
+          barPercentage:0.92, categoryPercentage:0.86,
           plugins:{
-            title:{display:!!spec.title, text:spec.title||'', font:{size:13, weight:'bold'},
-                   color:'#2A2E38', padding:{top:0,bottom:6}},
-            legend:{display: datasets.length>1 || isPie, position:'bottom',
-                    labels:{font:{size:11}, boxWidth:10, boxHeight:10, padding:8}}
+            title:{display:!!spec.title, text:spec.title||'', font:{size:12, weight:'bold'},
+                   color:'#2A2E38', padding:{top:0,bottom:3}},
+            /* 円グラフは凡例を右に置いて縦の無駄を省く */
+            legend:{display: datasets.length>1 || isPie, position: isPie ? 'right' : 'bottom',
+                    labels:{font:{size:10}, boxWidth:8, boxHeight:8, padding:5}}
           },
           scales: isPie ? {} : {
-            y:{beginAtZero:true, ticks:{font:{size:11}}, grid:{color:'rgba(0,0,0,.06)'}},
-            x:{ticks:{font:{size:11}}, grid:{display:false}}
+            y:{beginAtZero:true, ticks:{font:{size:10}, maxTicksLimit:5, padding:2},
+               grid:{color:'rgba(0,0,0,.05)'}, border:{display:false}},
+            x:{ticks:{font:{size:10}, padding:1, autoSkip:true, maxRotation:0},
+               grid:{display:false}, border:{display:false}}
           }
         }
       });
