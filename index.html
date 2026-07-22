@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Capitoline Council — CapiCo v3.9</title>
+<title>Capitoline Council — CapiCo v4.1</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <!-- PowerPoint生成(JSZipを内包) -->
@@ -421,6 +421,82 @@
     background:var(--gold);border-radius:6px;border:2px solid transparent;background-clip:content-box}
   .viewer-body::-webkit-scrollbar-track, .dg-body::-webkit-scrollbar-track,
   .chat-box::-webkit-scrollbar-track, .at-preview::-webkit-scrollbar-track{background:rgba(0,0,0,.06);border-radius:6px}
+  /* ===== 記事の完成形表示(ブログ記事そのままの見た目) ===== */
+  .article-paper{background:#fff;border:1px solid var(--edge);border-radius:8px;
+    padding:22px 26px;box-shadow:0 2px 10px rgba(42,46,56,.08);margin-top:4px}
+  .am-title{font-size:24px;font-weight:bold;line-height:1.45;margin:0 0 16px;
+    color:var(--ink);border-bottom:3px solid var(--gold);padding-bottom:10px}
+  .am-body{font-size:16px;line-height:1.95;color:var(--ink)}
+  .am-body h2{font-size:20px;font-weight:bold;margin:26px 0 12px;padding-left:11px;
+    border-left:5px solid var(--gold);line-height:1.5}
+  .am-body h3{font-size:17.5px;font-weight:bold;margin:20px 0 10px;color:var(--ink);
+    border-bottom:1px dashed var(--edge);padding-bottom:5px}
+  .am-body h4{font-size:16px;font-weight:bold;margin:16px 0 8px}
+  .am-body p{margin:0 0 14px}
+  .am-body ul{margin:0 0 14px 0;padding-left:24px}
+  .am-body li{margin:5px 0}
+  .am-body strong{font-weight:bold;background:linear-gradient(transparent 62%, rgba(201,162,39,.30) 62%)}
+  .am-body a{color:#1D6FA5}
+  .am-body figure{margin:16px 0;text-align:center}
+  .am-body figure img{max-width:100%;height:auto;border-radius:6px;display:block;margin:0 auto}
+  .am-body figcaption{font-size:12px;color:var(--ink-dim);margin-top:6px}
+  .am-body table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14.5px}
+  .am-body th{background:var(--gold-soft);border:1px solid var(--edge);padding:9px 11px;
+    text-align:left;font-weight:bold}
+  .am-body td{border:1px solid var(--edge);padding:9px 11px}
+  .am-body tr:nth-child(even) td{background:rgba(0,0,0,.02)}
+  .am-raw{margin-top:8px}
+  .am-raw summary{font-size:11.5px;color:var(--ink-dim);cursor:pointer;padding:3px 0}
+  .am-raw-body{white-space:pre-wrap;font-size:11.5px;color:var(--ink-dim);
+    background:rgba(0,0,0,.03);border-radius:5px;padding:8px 10px;max-height:220px;overflow:auto}
+  .article-msg{max-width:100%}
+  /* プレビュー欄も同じ記事スタイルを適用 */
+  .at-preview{font-size:14px}
+  .at-preview h2{font-size:17px;font-weight:bold;margin:16px 0 8px;padding-left:9px;border-left:4px solid var(--gold)}
+  .at-preview h3{font-size:15.5px;font-weight:bold;margin:12px 0 6px}
+  .at-preview p{margin:0 0 10px}
+  .at-preview figure{margin:10px 0;text-align:center}
+  .at-preview figure img{max-width:100%;height:auto;border-radius:5px}
+  .at-preview figcaption{font-size:11px;color:var(--ink-dim)}
+  .at-preview table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12.5px}
+  .at-preview th{background:var(--gold-soft);border:1px solid var(--edge);padding:6px 8px}
+  .at-preview td{border:1px solid var(--edge);padding:6px 8px}
+  /* ===== 写真ピッカー(候補を並べてチェックで選ぶ) ===== */
+  .photo-picker{background:#FFFBF0;border:2px solid var(--gold);border-radius:8px;padding:14px 16px;margin:10px 0}
+  .pp-head{font-weight:bold;color:var(--gold);font-size:15px;margin-bottom:6px}
+  .pp-explain{font-size:13px;line-height:1.75;color:var(--ink);background:#fff;
+    border:1px solid var(--edge);border-radius:6px;padding:9px 11px;margin-bottom:10px}
+  .pp-search{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+  .pp-kw{flex:1;min-width:180px;font-size:15px;padding:9px 11px;border:1px solid var(--edge);
+    border-radius:6px;background:#fff;color:var(--ink)}
+  .pp-searchbtn{background:var(--gold);color:#fff;border:none;border-radius:6px;
+    padding:9px 20px;font-size:14px;font-weight:bold;cursor:pointer;white-space:nowrap}
+  .pp-searchbtn:hover{filter:brightness(1.08)}
+  .pp-status{font-size:13px;color:var(--ink-dim);margin:6px 0;line-height:1.6}
+  .pp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;margin:10px 0}
+  .pp-card{border:3px solid #ddd;border-radius:8px;overflow:hidden;background:#fff;
+    display:flex;flex-direction:column;transition:.15s}
+  .pp-card img{width:100%;height:120px;object-fit:cover;display:block;cursor:zoom-in;background:#f0f0f0}
+  .pp-card.pp-noimg::before{content:'画像を読み込めません';display:block;height:120px;line-height:120px;
+    text-align:center;font-size:12px;color:#999;background:#f5f5f5}
+  .pp-lic{font-size:11.5px;padding:5px 7px;text-align:center;font-weight:bold;line-height:1.4}
+  .pp-chk{display:flex;align-items:center;gap:6px;padding:8px 8px;font-size:13px;
+    cursor:pointer;border-top:1px solid var(--edge);background:#FAFAF7}
+  .pp-chk input{width:18px;height:18px;cursor:pointer}
+  .pp-green{border-color:#2E9E4F} .pp-green .pp-lic{color:#2E9E4F;background:#EDF7EE}
+  .pp-gold{border-color:#C9A227}  .pp-gold .pp-lic{color:#9C7B12;background:#FBF5E3}
+  .pp-red{border-color:#C4364F}   .pp-red .pp-lic{color:#C4364F;background:#FBECEF}
+  .pp-red .pp-chk{color:#999;cursor:not-allowed}
+  .pp-gray{border-color:#aaa}     .pp-gray .pp-lic{color:#777;background:#F2F2F2}
+  .pp-card.pp-selected{box-shadow:0 0 0 3px rgba(201,162,39,.45);transform:translateY(-2px)}
+  .pp-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:8px;
+    border-top:1px dashed var(--edge);padding-top:10px}
+  .pp-eyeopt{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;flex:1;min-width:200px}
+  .pp-eyeopt input{width:17px;height:17px}
+  .pp-insertbtn{background:var(--gold);color:#fff;border:none;border-radius:6px;
+    padding:11px 22px;font-size:15px;font-weight:bold;cursor:pointer}
+  .pp-insertbtn:disabled{background:#ccc;cursor:not-allowed}
+  .pp-insertbtn:not(:disabled):hover{filter:brightness(1.08)}
   /* ===== コピー行(共通部品) ===== */
   .copy-row{display:flex;align-items:center;gap:8px;margin:6px 0;background:#F7F3E8;
     border:1px solid var(--edge);border-radius:6px;padding:6px 8px;flex-wrap:wrap}
@@ -561,7 +637,7 @@
 <header>
   <div class="brand">
     <span class="en">CAPITOLINE COUNCIL</span>
-    <span class="jp">カピトリーノ評議会 — CapiCo v3.9 / Private AI Agents Company</span>
+    <span class="jp">カピトリーノ評議会 — CapiCo v4.1 / Private AI Agents Company</span>
   </div>
   <div class="chair-badge" id="chair-badge">現議長: <b>—</b></div>
   <div class="mem-badge" id="mem-badge">記憶: 未読込</div>
@@ -993,7 +1069,7 @@
 </main>
 
 <input type="file" id="doc-file-input" multiple hidden accept=".docx,.doc,.xlsx,.xls,.xlsm,.pptx,.ppt,.pdf,.md,.txt,.csv,.json,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tif,.tiff,.heic,.heif">
-<footer>CAPITOLINE COUNCIL v3.9 — SCROLL FIX (FLEXBOX min-height)</footer>
+<footer>CAPITOLINE COUNCIL v4.1 — PHOTO PICKER (CHECKBOX + EYECATCH)</footer>
 
 <div id="dg-modal" role="dialog" aria-modal="true">
   <div class="dg-card">
@@ -2755,6 +2831,53 @@ function renderMsg(role, text, isErr, scrollDown){
 }
 /* 検証結果を折りたたみで直前のAI回答に添付 */
 /* 投稿用記事のツール: 題名/本文の分離コピー + フリー素材提示 */
+/* 記事の本文を「完成した見た目」で描画(Markdown / HTML どちらでも) */
+function renderArticleBody(el, art){
+  el.innerHTML = '';
+  if(art.isHTML){
+    el.innerHTML = sanitizeHTML(art.body);
+  }else{
+    /* Markdown → HTML に変換して、実際の記事の見た目で表示 */
+    el.innerHTML = mdBodyToHTML(art.body);
+  }
+  /* グラフ記法があれば描画し直す(HTML変換では表になっているので通常は不要) */
+}
+/* 記事を「完成形」でチャットに表示する(##やHTMLは一切見せない) */
+function renderArticleMessage(art, rawReply){
+  const box = $('chat-box');
+  const div = document.createElement('div');
+  div.className = 'msg ai article-msg';
+  const who = document.createElement('div'); who.className = 'who'; who.textContent = 'ユピテル';
+  div.appendChild(who);
+
+  const paper = document.createElement('div');
+  paper.className = 'article-paper';
+  if(art.title){
+    const h = document.createElement('h1'); h.className = 'am-title'; h.textContent = art.title;
+    paper.appendChild(h);
+  }
+  const bodyEl = document.createElement('div');
+  bodyEl.className = 'am-body readable';
+  bodyEl.dataset.vtitle = '記事: ' + (art.title||'');
+  bodyEl.dataset.richsrc = art.isHTML ? '' : art.body;
+  renderArticleBody(bodyEl, art);
+  window.LAST_ARTICLE_EL = bodyEl;   /* 画像を差し込んだら、ここも更新する */
+  paper.appendChild(bodyEl);
+  div.appendChild(paper);
+
+  /* 元テキストを見たい人向け(折りたたみ・普段は閉じている) */
+  const det = document.createElement('details'); det.className = 'am-raw';
+  const sm = document.createElement('summary'); sm.textContent = '(参考)元のテキストを見る';
+  const pre = document.createElement('div'); pre.className='am-raw-body'; pre.textContent = rawReply;
+  det.appendChild(sm); det.appendChild(pre);
+  div.appendChild(det);
+
+  box.appendChild(div);
+  if(SYS_MSG_EL){ SYS_MSG_EL.remove(); SYS_MSG_EL = null; }
+  box.scrollTop = box.scrollHeight;
+  return div;
+}
+
 /* コピー用の共通部品: ラベル + 値 + 横にコピーボタン(全体で使い回す) */
 function copyRow(label, value){
   const row = document.createElement('div');
@@ -2781,7 +2904,7 @@ function attachArticleTools(art, rawReply){
   wrap.innerHTML = '<div class="at-head">📰 投稿用ツール</div>';
 
   /* 記事の状態(画像を差し込むと body が更新される) */
-  const state = { title: art.title || '', body: art.body || '', images: [] };
+  const state = { title: art.title || '', body: art.body || '', images: [], isHTML: !!art.isHTML };
 
   /* 題名 */
   if(art.isArticle && art.title){
@@ -2796,135 +2919,193 @@ function attachArticleTools(art, rawReply){
   const preview = document.createElement('div');
   preview.className = 'at-preview';
   const renderPreview = ()=>{
-    preview.innerHTML = '';
-    if(typeof renderRichArticle === 'function') renderRichArticle(preview, state.body);
-    else renderRich(preview, state.body);
+    renderArticleBody(preview, state);
+    /* チャット上に表示している記事本体も、同じ内容に更新する */
+    if(window.LAST_ARTICLE_EL){
+      renderArticleBody(window.LAST_ARTICLE_EL, state);
+      if(!state.isHTML) window.LAST_ARTICLE_EL.dataset.richsrc = state.body;
+    }
   };
   renderPreview();
 
-  /* ===== アイキャッチ(記事トップ画像)セクション ===== */
-  const eyeSec = document.createElement('div'); eyeSec.className = 'at-eyecatch';
-  eyeSec.innerHTML = '<div class="at-eyehead">🖼 アイキャッチ画像(記事の一番上に表示する画像)</div>'
-    + '<div class="at-note">記事の題名から自動でフリー素材を提案します。気に入ったものをクリック→「この画像を使う」で、画像URLとクレジットをコピーできます。</div>';
-  const eyeGrid = document.createElement('div'); eyeGrid.className = 'free-img-grid';
-  const eyeStatus = document.createElement('div'); eyeStatus.className = 'at-note';
-  eyeSec.appendChild(eyeStatus);
-  eyeSec.appendChild(eyeGrid);
-  /* 再検索ボタン(キーワードを変えて探す) */
-  const eyeBtn = document.createElement('button'); eyeBtn.className='msg-copy-btn'; eyeBtn.textContent='🔍 別のキーワードで探す';
-  eyeBtn.addEventListener('click', ()=> loadEyecatch(true));
-  eyeSec.appendChild(eyeBtn);
-  wrap.appendChild(eyeSec);
+  /* ===== 写真を選ぶ(候補を並べてチェックで選択) ===== */
+  const picker = document.createElement('div'); picker.className = 'photo-picker';
+  picker.innerHTML =
+    '<div class="pp-head">🖼 記事に入れる写真を選ぶ</div>'
+    + '<div class="pp-explain"><b>アイキャッチ</b>とは、<b>記事の一番上に出る「看板写真」</b>のことです。'
+    + 'ブログ一覧やSNSでシェアされた時に表示される、記事の顔になる画像です。<br>'
+    + '下の候補から<b>使いたい写真にチェック</b>を入れて、一番下のボタンを押すと記事に入ります。</div>';
 
-  async function loadEyecatch(ask){
-    let kw = state.title || state.body.slice(0,30);
-    if(ask){
-      const input = prompt('アイキャッチを探すキーワード(英語推奨。例: soccer trophy, stadium night)', kw);
-      if(!input) return;
-      kw = input;
-    }
-    eyeStatus.textContent = '🔍 「'+kw+'」でフリー素材を検索中…';
-    eyeGrid.innerHTML = '';
+  /* 検索欄 */
+  const searchRow = document.createElement('div'); searchRow.className = 'pp-search';
+  const kwInput = document.createElement('input');
+  kwInput.type = 'text'; kwInput.className = 'pp-kw';
+  kwInput.placeholder = '写真のキーワード(英語だと沢山出ます。例: soccer stadium)';
+  const searchBtn = document.createElement('button'); searchBtn.className = 'pp-searchbtn'; searchBtn.textContent = '🔍 探す';
+  searchRow.appendChild(kwInput); searchRow.appendChild(searchBtn);
+  picker.appendChild(searchRow);
+
+  const ppStatus = document.createElement('div'); ppStatus.className = 'pp-status';
+  picker.appendChild(ppStatus);
+  const ppGrid = document.createElement('div'); ppGrid.className = 'pp-grid';
+  picker.appendChild(ppGrid);
+
+  /* 選択した写真を入れるボタン */
+  const ppFoot = document.createElement('div'); ppFoot.className = 'pp-foot';
+  const eyeOpt = document.createElement('label'); eyeOpt.className = 'pp-eyeopt';
+  const eyeChk = document.createElement('input'); eyeChk.type='checkbox'; eyeChk.checked = true;
+  eyeOpt.appendChild(eyeChk);
+  eyeOpt.appendChild(document.createTextNode(' 最初の1枚をアイキャッチ(記事の一番上)にする'));
+  const insertBtn = document.createElement('button'); insertBtn.className = 'pp-insertbtn';
+  insertBtn.textContent = '✅ 選んだ写真を記事に入れる';
+  insertBtn.disabled = true;
+  ppFoot.appendChild(eyeOpt); ppFoot.appendChild(insertBtn);
+  picker.appendChild(ppFoot);
+  wrap.appendChild(picker);
+
+  const selected = [];
+  function refreshInsertBtn(){
+    insertBtn.disabled = selected.length === 0;
+    insertBtn.textContent = selected.length === 0
+      ? '✅ 選んだ写真を記事に入れる'
+      : `✅ 選んだ写真${selected.length}枚を記事に入れる`;
+  }
+
+  async function doSearch(kw){
+    ppStatus.textContent = '🔍 「' + kw + '」で無料写真を探しています…';
+    ppGrid.innerHTML = '';
+    selected.length = 0; refreshInsertBtn();
     try{
       const imgs = await searchFreeImages(kw);
-      if(!imgs.length){ eyeStatus.textContent = '見つかりませんでした。「🔍別のキーワードで探す」で英語キーワードをお試しください。'; return; }
-      eyeStatus.textContent = '候補' + imgs.length + '件(緑=クレジット不要 / 金=クレジット要 / 赤=商用不可)。クリックで詳細。';
+      if(!imgs.length){
+        ppStatus.innerHTML = '<b>見つかりませんでした。</b> 英語のキーワード(例: soccer, stadium, trophy)でもう一度お試しください。';
+        return;
+      }
+      ppStatus.innerHTML = `候補 <b>${imgs.length}枚</b> — 使いたい写真にチェックを入れてください。写真をクリックすると大きく見られます。`;
       imgs.forEach(im=>{
         const tier = licenseTier(im.license);
-        const card = document.createElement('div'); card.className = 'fimg fimg-'+tier.color;
-        card.innerHTML = `<img src="${im.thumb}" alt="" loading="lazy"><div class="fimg-lic">${im.license||'?'}</div>`;
-        card.title = tier.label;
-        card.addEventListener('click', ()=> openFreeImage(im, tier, (chosen)=> useAsEyecatch(chosen)));
-        eyeGrid.appendChild(card);
+        const jpLabel = {green:'🟢 そのまま使える', gold:'🟡 出典を書けば使える(自動で書きます)',
+                         red:'🔴 使用不可(商用NG)', gray:'⚪ 要確認'}[tier.color];
+        const card = document.createElement('div'); card.className = 'pp-card pp-'+tier.color;
+        const imgEl = document.createElement('img');
+        imgEl.src = im.thumb || im.full; imgEl.loading='lazy'; imgEl.alt='';
+        imgEl.addEventListener('error', ()=>{ imgEl.style.display='none'; card.classList.add('pp-noimg'); });
+        imgEl.addEventListener('click', ()=> openFreeImage(im, tier, null));
+        card.appendChild(imgEl);
+        const lic = document.createElement('div'); lic.className='pp-lic'; lic.textContent = jpLabel;
+        card.appendChild(lic);
+        const chkLab = document.createElement('label'); chkLab.className='pp-chk';
+        const chk = document.createElement('input'); chk.type='checkbox';
+        if(tier.color === 'red'){ chk.disabled = true; }
+        chk.addEventListener('change', ()=>{
+          if(chk.checked){ selected.push(im); card.classList.add('pp-selected'); }
+          else{ const i = selected.indexOf(im); if(i>=0) selected.splice(i,1); card.classList.remove('pp-selected'); }
+          refreshInsertBtn();
+        });
+        chkLab.appendChild(chk);
+        chkLab.appendChild(document.createTextNode(tier.color==='red' ? ' 使えません' : ' この写真を使う'));
+        card.appendChild(chkLab);
+        ppGrid.appendChild(card);
       });
-    }catch(e){ eyeStatus.textContent = '画像検索に失敗: ' + e.message; }
-  }
-  /* アイキャッチとして採用(URL・クレジットをコピーできる形で表示) */
-  function useAsEyecatch(im){
-    const tier = licenseTier(im.license);
-    state.eyecatch = im;
-    eyeStatus.innerHTML = '';
-    const box2 = document.createElement('div'); box2.className = 'eyecatch-chosen fimg-'+tier.color;
-    const credit = im.attribution || `"${im.title}" by ${im.creator} (${im.license})`;
-    box2.innerHTML = `<div class="ec-row"><b>✅ アイキャッチに採用しました</b></div>
-      <img src="${im.thumb}" style="max-width:200px;border-radius:6px;margin:6px 0">`;
-    /* 画像URLのコピー行 */
-    box2.appendChild(copyRow('画像URL', im.full));
-    if(tier.color === 'gold' || tier.color === 'red'){
-      box2.appendChild(copyRow('クレジット表記', credit));
+    }catch(e){
+      ppStatus.innerHTML = '<b style="color:#C4364F">写真の検索に失敗しました:</b> ' + e.message
+        + '<br>広告ブロッカーや社内ネットワークが通信を遮断している可能性があります。';
     }
-    const openA = document.createElement('a');
-    openA.href = im.foreignUrl; openA.target='_blank'; openA.rel='noopener';
-    openA.className='msg-copy-btn'; openA.style.textDecoration='none'; openA.textContent='🔗 元ページで画像を保存';
-    box2.appendChild(openA);
-    if(tier.color==='red'){
-      const w = document.createElement('div'); w.className='at-note'; w.style.color='#C4364F';
-      w.textContent='⚠ この画像は商用不可/改変不可の制限があります。収益ブログでの使用は避けてください。';
-      box2.appendChild(w);
-    }
-    eyeStatus.appendChild(box2);
   }
-  loadEyecatch(false); /* 記事作成時に自動で提案 */
-
-  /* 本文コピー */
-  const b = document.createElement('div'); b.className = 'at-row';
-  b.innerHTML = `<span class="at-label">本文:</span>`;
-  const wpb = document.createElement('button'); wpb.className='msg-copy-btn';
-  wpb.textContent = '📝 本文をWordPress用にコピー(画像・表つき)';
-  wpb.addEventListener('click', async ()=>{
-    const html = mdBodyToHTML(state.body);
-    const ok = await copyRichHTML(html, state.body);
-    wpb.textContent = ok ? '✅ 本文をコピーしました(画像入り)' : '⚠ 失敗';
-    setTimeout(()=>wpb.textContent='📝 本文をWordPress用にコピー(画像・表つき)', 2200);
+  searchBtn.addEventListener('click', ()=>{
+    const kw = kwInput.value.trim();
+    if(!kw){ kwInput.focus(); return; }
+    doSearch(kw);
   });
-  b.appendChild(wpb); wrap.appendChild(b);
+  kwInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); searchBtn.click(); } });
 
-  if(art.isArticle && art.title){
-    const both = document.createElement('div'); both.className='at-note';
-    both.textContent = 'WordPressでは、題名を上のタイトル欄に、本文を下の本文欄に貼り分けてください。画像は本文に埋め込まれた状態でコピーされます。';
-    wrap.appendChild(both);
-  }
-
-  const pvLabel = document.createElement('div'); pvLabel.className='at-note'; pvLabel.style.marginTop='4px';
-  pvLabel.textContent = '▼ 本文プレビュー(画像を選ぶとここに差し込まれます)';
-  wrap.appendChild(pvLabel);
-  wrap.appendChild(preview);
-
-  /* フリー素材の画像検索 */
-  const imgSec = document.createElement('div'); imgSec.className='at-imgsec';
-  const imgBtn = document.createElement('button'); imgBtn.className='btn gold'; imgBtn.style.cssText='margin:0;padding:7px 14px;font-size:13px';
-  imgBtn.textContent = '🖼 記事に使えるフリー素材を探す';
-  const imgResult = document.createElement('div'); imgResult.className='free-img-grid';
-  imgBtn.addEventListener('click', async ()=>{
-    let q = state.title || state.body.slice(0,40);
-    const kw = prompt('画像を探すキーワード(英語のほうが多くヒットします。例: soccer stadium, World Cup)', q);
-    if(!kw) return;
-    imgBtn.disabled = true; imgBtn.textContent = '検索中…';
-    imgResult.innerHTML = '';
-    try{
-      const imgs = await searchFreeImages(kw);
-      if(imgs.length === 0){ imgResult.innerHTML = '<div class="at-note">見つかりませんでした。別のキーワード(英語)でお試しください。</div>'; }
-      imgs.forEach(im=>{
-        const tier = licenseTier(im.license);
-        const card = document.createElement('div'); card.className = 'fimg fimg-'+tier.color;
-        card.innerHTML = `<img src="${im.thumb}" alt="" loading="lazy"><div class="fimg-lic">${im.license||'?'}</div>`;
-        card.title = tier.label;
-        /* クリック → 確認画面 → 「この画像を使う」で本文に自動挿入 */
-        card.addEventListener('click', ()=> openFreeImage(im, tier, (chosen)=> insertImageIntoArticle(state, chosen, renderPreview)));
-        imgResult.appendChild(card);
-      });
-    }catch(e){ imgResult.innerHTML = '<div class="at-note">画像検索に失敗: '+e.message+'</div>'; }
-    imgBtn.disabled = false; imgBtn.textContent = '🖼 記事に使えるフリー素材を探す';
+  insertBtn.addEventListener('click', ()=>{
+    if(!selected.length) return;
+    insertSelectedImages(state, selected.slice(), eyeChk.checked, renderPreview);
+    /* 入れ終わったらチェックを外す */
+    ppGrid.querySelectorAll('input[type=checkbox]').forEach(c=>{ c.checked=false; });
+    ppGrid.querySelectorAll('.pp-card').forEach(c=>c.classList.remove('pp-selected'));
+    selected.length = 0; refreshInsertBtn();
   });
-  imgSec.appendChild(imgBtn);
-  const noteEl = document.createElement('div'); noteEl.className='at-note';
-  noteEl.textContent = '↑ ライセンスが明確な素材(Openverse経由)のみ。緑=クレジット不要 / 金=クレジット表記で可 / 赤=制限あり。画像を選び「この画像を使う」を押すと、本文の適切な位置に自動で差し込まれます(必要なクレジットも一緒に)。';
-  imgSec.appendChild(noteEl);
-  imgSec.appendChild(imgResult);
-  wrap.appendChild(imgSec);
+
+  /* 記事の題名から自動で最初の検索を実行 */
+  (function autoFirstSearch(){
+    const t = (state.title||'').trim();
+    kwInput.value = t;
+    if(t) doSearch(t);
+    else ppStatus.textContent = 'キーワードを入れて「探す」を押してください。';
+  })();
 
   box.appendChild(wrap);
   box.scrollTop = box.scrollHeight;
+}
+
+/* 画像1枚分のMarkdown(またはHTML)を作る */
+function buildImageMarkup(im, isHTML){
+  const tier = licenseTier(im.license);
+  const needCredit = (tier.color === 'gold' || tier.color === 'red');
+  const credit = im.attribution || `"${im.title}" by ${im.creator} (${im.license})`;
+  const alt = (im.title||'画像').replace(/[\[\]<>]/g,'');
+  if(isHTML){
+    return `\n<figure class="wp-block-image size-large"><img src="${im.full}" alt="${alt}"/>`
+      + (needCredit ? `<figcaption>出典: ${credit.replace(/</g,'&lt;')}</figcaption>` : '')
+      + `</figure>\n`;
+  }
+  let md = `\n\n![${alt}](${im.full})`;
+  if(needCredit) md += `\n*出典: ${credit}*`;
+  return md + '\n\n';
+}
+
+/* 選んだ写真をまとめて記事に入れる(1枚目をアイキャッチ=記事の一番上にできる) */
+function insertSelectedImages(state, images, asEyecatch, onDone){
+  if(!images || !images.length) return;
+  const isHTML = !!state.isHTML;
+  let list = images.slice();
+
+  /* ① アイキャッチ: 1枚目を記事の一番上へ */
+  if(asEyecatch){
+    const first = list.shift();
+    state.eyecatch = first;
+    state.body = buildImageMarkup(first, isHTML).replace(/^\n+/,'') + '\n' + state.body;
+  }
+
+  /* ② 残りは見出しの後に順番に配置(見出しが足りなければ末尾へ) */
+  if(list.length){
+    if(isHTML){
+      /* HTMLモード: </h2>の直後に順に差し込む */
+      let rest = list.slice();
+      state.body = state.body.replace(/<\/h2>/gi, (m)=>{
+        if(!rest.length) return m;
+        const im = rest.shift();
+        return m + buildImageMarkup(im, true);
+      });
+      rest.forEach(im=>{ state.body += buildImageMarkup(im, true); });
+    }else{
+      const lines = state.body.split('\n');
+      const out = [];
+      let rest = list.slice();
+      for(let i=0;i<lines.length;i++){
+        out.push(lines[i]);
+        if(rest.length && /^#{2,4}\s/.test(lines[i].trim())){
+          /* 見出しの次の段落の後ろに入れたいので、段落の終わりを探す */
+          let j = i+1;
+          while(j < lines.length && !lines[j].trim()) { out.push(lines[j]); j++; }
+          while(j < lines.length && lines[j].trim()) { out.push(lines[j]); j++; }
+          i = j-1;
+          out.push(buildImageMarkup(rest.shift(), false));
+        }
+      }
+      rest.forEach(im=> out.push(buildImageMarkup(im, false)));
+      state.body = out.join('\n');
+    }
+  }
+
+  state.images = (state.images||[]).concat(images);
+  if(onDone) onDone();
+  const n = images.length;
+  alert('✅ 写真' + n + '枚を記事に入れました。'
+    + (asEyecatch ? '\n(1枚目は記事の一番上=アイキャッチにしました)' : '')
+    + '\n\n画面の記事に反映されています。「📝本文をWordPress用にコピー」で写真ごと貼り付けられます。');
 }
 
 /* 選ばれた画像を本文の最適な位置に自動挿入 */
@@ -3083,12 +3264,21 @@ async function sendQuick(){
         }
       }
     }
-    renderMsg('ai', reply);
-    if(LAST_VERIFICATION){ attachVerification(LAST_VERIFICATION); LAST_VERIFICATION=''; }
-    /* 投稿用記事モード: 題名/本文の分離コピー + フリー素材の提示 */
+    /* 投稿用記事モード: 記号やHTMLは見せず「完成した記事の見た目」だけを表示 */
     if(articleMode){
       const art = splitArticle(reply);
-      attachArticleTools(art, reply);
+      if(art.isArticle){
+        renderArticleMessage(art, reply);
+        if(LAST_VERIFICATION){ attachVerification(LAST_VERIFICATION); LAST_VERIFICATION=''; }
+        attachArticleTools(art, reply);
+      }else{
+        renderMsg('ai', reply);
+        if(LAST_VERIFICATION){ attachVerification(LAST_VERIFICATION); LAST_VERIFICATION=''; }
+        attachArticleTools(art, reply);
+      }
+    }else{
+      renderMsg('ai', reply);
+      if(LAST_VERIFICATION){ attachVerification(LAST_VERIFICATION); LAST_VERIFICATION=''; }
     }
     setQuickDeity('done');
     const s2 = loadScrolls();
@@ -3802,7 +3992,7 @@ function mdBodyToHTML(text){
         }
         else if(m = t.match(/^(#{1,4})\s+(.*)$/)){
           flushImg(); closeList();
-          const lv = Math.min(m[1].length+1, 4); /* # → h2 から */
+          const lv = Math.min(Math.max(m[1].length, 2), 4); /* ##→h2(記事の標準), ###→h3 */
           html += `<h${lv}>${mdInline(m[2])}</h${lv}>\n`;
         }else if(m = t.match(/^[-・]\s+(.*)$/) || (t.match(/^\*\s+(.*)$/) && (m=t.match(/^\*\s+(.*)$/)))){
           flushImg();
@@ -4178,26 +4368,56 @@ function isArticleRequest(text){
 }
 /* 記事モード時に議長へ渡す追加指示: 題名と本文を分離させる */
 function articleRule(){
-  return `\n\n=== 投稿用記事モード(重要) ===
-主宰は「公開・投稿する記事」を求めている。以下を厳守せよ:
-1. 記事は必ず次の形式で出力する(この見出し行をそのまま含めよ):
+  return `\n\n=== 投稿用記事モード(絶対厳守) ===
+主宰は「公開・投稿する記事」を求めている。主宰はHTMLを読めないし、読む必要もない。
+WordPressへの変換はシステムが自動で行うので、あなたは変換を一切気にしなくてよい。
+
+【絶対禁止】
+・HTMLタグ(<p> <h2> <table> <div> <article> style= など)を書くこと ← 厳禁
+・コードブロック(バッククォート3つで囲む書き方)で記事を出すこと ← 厳禁
+・貼り付け手順やエディタの使い方を説明すること ← 不要(システムが処理する)
+
+【出力形式】必ずこの形だけで書け:
 【題名】
 (30字前後の魅力的なタイトルを1行)
 【本文】
-(本文。見出しは##、強調は**で。表・グラフは通常ルール通り)
-2. 事実(日程・数値・人名・結果)は、Web検索で確認できたものだけを断定し、未確認は「(要確認)」と明記せよ。
-3. 記事本文に画像は自分で貼らない(著作権のため)。画像は別途システムが安全なフリー素材を提示する。
-   本文中には[画像挿入: どんな画像が欲しいか]という目印だけ置いてよい。`;
+(本文をここに。見出しは ## 、強調は ** 、箇条書きは - 、表はMarkdownの表)
+
+【その他】
+・事実(日程・数値・人名・結果)はWeb検索で確認できたものだけ断定し、未確認は「(要確認)」と明記
+・画像は自分で貼らない(著作権のため)。システムが安全なフリー素材を提示し、自動で差し込む`;
 }
 /* 回答から題名と本文を分離 */
 function splitArticle(text){
-  const t = String(text||'');
+  let t = String(text||'');
+  /* AIが誤ってHTMLコードブロックで出した場合は、その中身をHTMLとして扱う(救済) */
+  const htmlBlock = t.match(/```html\s*([\s\S]*?)```/i);
+  if(htmlBlock){
+    const inner = htmlBlock[1];
+    /* 題名はHTMLの外か、h1から拾う */
+    let title = '';
+    const mT = t.match(/【題名】\s*\n?([^\n]+)/);
+    if(mT) title = mT[1].trim();
+    else {
+      const h1 = inner.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+      if(h1) title = h1[1].replace(/<[^>]+>/g,'').trim();
+    }
+    return {title, body: inner.trim(), isArticle:true, isHTML:true};
+  }
   const mTitle = t.match(/【題名】\s*\n?([^\n]+)/);
   const mBody = t.match(/【本文】\s*\n?([\s\S]*)$/);
   if(mTitle && mBody){
-    return {title: mTitle[1].trim(), body: mBody[1].trim(), isArticle:true};
+    return {title: mTitle[1].trim(), body: mBody[1].trim(), isArticle:true, isHTML:false};
   }
-  return {title:'', body:t, isArticle:false};
+  return {title:'', body:t, isArticle:false, isHTML:false};
+}
+/* HTMLを安全化(scriptなど危険な要素を除去) */
+function sanitizeHTML(html){
+  return String(html||'')
+    .replace(/<script[\s\S]*?<\/script>/gi,'')
+    .replace(/<iframe[\s\S]*?<\/iframe>/gi,'')
+    .replace(/ on[a-z]+\s*=\s*"[^"]*"/gi,'')
+    .replace(/ on[a-z]+\s*=\s*'[^']*'/gi,'');
 }
 
 /* ===== フリー素材の画像検索(投稿用) ===== */
