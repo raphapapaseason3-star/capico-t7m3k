@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Capitoline Council — CapiCo v4.1</title>
+<title>Capitoline Council — CapiCo v4.2</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <!-- PowerPoint生成(JSZipを内包) -->
@@ -637,7 +637,7 @@
 <header>
   <div class="brand">
     <span class="en">CAPITOLINE COUNCIL</span>
-    <span class="jp">カピトリーノ評議会 — CapiCo v4.1 / Private AI Agents Company</span>
+    <span class="jp">カピトリーノ評議会 — CapiCo v4.2 / Private AI Agents Company</span>
   </div>
   <div class="chair-badge" id="chair-badge">現議長: <b>—</b></div>
   <div class="mem-badge" id="mem-badge">記憶: 未読込</div>
@@ -1069,7 +1069,7 @@
 </main>
 
 <input type="file" id="doc-file-input" multiple hidden accept=".docx,.doc,.xlsx,.xls,.xlsm,.pptx,.ppt,.pdf,.md,.txt,.csv,.json,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tif,.tiff,.heic,.heif">
-<footer>CAPITOLINE COUNCIL v4.1 — PHOTO PICKER (CHECKBOX + EYECATCH)</footer>
+<footer>CAPITOLINE COUNCIL v4.2 — FORCED PLAIN FORMAT + ARTICLE FALLBACK</footer>
 
 <div id="dg-modal" role="dialog" aria-modal="true">
   <div class="dg-card">
@@ -2822,7 +2822,19 @@ function renderMsg(role, text, isErr, scrollDown){
     txtb.addEventListener('click', async ()=>{
       try{ await navigator.clipboard.writeText(text); txtb.textContent='✅'; setTimeout(()=>txtb.textContent='📋 文字だけ',1500); }catch(e){}
     });
-    bar.appendChild(wpb); bar.appendChild(txtb);
+    /* 保険: どの回答でも「記事として表示+写真を入れる」に切り替えられる */
+    const artb = document.createElement('button'); artb.className = 'msg-copy-btn';
+    artb.style.cssText = 'background:var(--gold);color:#fff;border-color:var(--gold)';
+    artb.textContent = '📰 記事として表示・写真を入れる';
+    artb.addEventListener('click', ()=>{
+      const art = splitArticle(text);
+      if(!art.isArticle){ art.isArticle = true; art.title = art.title || ''; }
+      renderArticleMessage(art, text);
+      attachArticleTools(art, text);
+      artb.textContent = '✅ 下に記事を表示しました';
+      artb.disabled = true;
+    });
+    bar.appendChild(artb); bar.appendChild(wpb); bar.appendChild(txtb);
     div.appendChild(bar);
   }
   box.appendChild(div);
@@ -3240,9 +3252,17 @@ async function sendQuick(){
       urlCtx = await urlContext(text);
     }
     const context = sc.hist.slice(-40);
-    if(urlCtx){
-      /* 最後のユーザー発言にページ内容を付加 */
-      context[context.length-1] = {role:'user', content: text + urlCtx};
+    /* 記事モードでは、直近のユーザー発言に強い書式指示を添える。
+       (過去の会話にHTML出力が残っていると、システム指示より履歴に引きずられるため) */
+    let lastUser = text + (urlCtx || '');
+    if(articleMode){
+      lastUser += '\n\n【書式の絶対指示】HTMLタグとコードブロックは絶対に使うな。'
+        + '過去のやり取りでHTMLを使っていても、今回は使うな。'
+        + '次の形だけで書け:\n【題名】\n(タイトル1行)\n【本文】\n(本文。見出しは ## 、強調は ** 、表はMarkdownの表)\n'
+        + '貼り付け手順の説明も不要。変換はシステムが自動で行う。';
+    }
+    if(urlCtx || articleMode){
+      context[context.length-1] = {role:'user', content: lastUser};
     }
     let reply = await callEngine(engine, quickTier, sys, context, 2000, $('web-quick').checked);
 
