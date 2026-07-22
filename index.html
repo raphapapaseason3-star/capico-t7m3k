@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Capitoline Council — CapiCo v4.2</title>
+<title>Capitoline Council — CapiCo v4.3</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <!-- PowerPoint生成(JSZipを内包) -->
@@ -637,7 +637,7 @@
 <header>
   <div class="brand">
     <span class="en">CAPITOLINE COUNCIL</span>
-    <span class="jp">カピトリーノ評議会 — CapiCo v4.2 / Private AI Agents Company</span>
+    <span class="jp">カピトリーノ評議会 — CapiCo v4.3 / Private AI Agents Company</span>
   </div>
   <div class="chair-badge" id="chair-badge">現議長: <b>—</b></div>
   <div class="mem-badge" id="mem-badge">記憶: 未読込</div>
@@ -1069,7 +1069,7 @@
 </main>
 
 <input type="file" id="doc-file-input" multiple hidden accept=".docx,.doc,.xlsx,.xls,.xlsm,.pptx,.ppt,.pdf,.md,.txt,.csv,.json,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tif,.tiff,.heic,.heif">
-<footer>CAPITOLINE COUNCIL v4.2 — FORCED PLAIN FORMAT + ARTICLE FALLBACK</footer>
+<footer>CAPITOLINE COUNCIL v4.3 — ARTICLE MODE IN COUNCIL TOO</footer>
 
 <div id="dg-modal" role="dialog" aria-modal="true">
   <div class="dg-card">
@@ -2383,6 +2383,19 @@ function sessionContextText(s, maxLen){
   if(t.length > cap) t = '(前略)' + t.slice(-cap);
   return t;
 }
+/* 評議会の回答表示: 記事依頼なら「記事の見た目+写真ピッカー」で出す */
+function showCouncilReply(reply, articleMode){
+  const box = $('council-thread');
+  if(articleMode){
+    const art = splitArticle(reply);
+    if(!art.isArticle){ art.isArticle = true; art.title = art.title || ''; art.body = art.body || reply; }
+    renderArticleMessage(art, reply, box);
+    attachArticleTools(art, reply, box);
+  }else{
+    renderThreadMsg('ai', reply);
+  }
+}
+
 function renderThreadMsg(role, text, isErr){
   const box = $('council-thread');
   const div = document.createElement('div');
@@ -2400,7 +2413,31 @@ function renderThreadMsg(role, text, isErr){
   body.dataset.vtitle = role==='user' ? '継続審議: あなたの発言' : '継続審議: 議長の応答';
   if(role === 'user' || isErr) body.textContent = text;
   else renderRich(body, text);
-  div.appendChild(who); div.appendChild(body); box.appendChild(div);
+  div.appendChild(who); div.appendChild(body);
+  /* 保険: どの回答でも記事表示+写真ピッカーに切り替えられる */
+  if(role === 'ai' && !isErr){
+    const bar = document.createElement('div'); bar.className = 'msg-actions';
+    const artb = document.createElement('button'); artb.className = 'msg-copy-btn';
+    artb.style.cssText = 'background:var(--gold);color:#fff;border-color:var(--gold)';
+    artb.textContent = '📰 記事として表示・写真を入れる';
+    artb.addEventListener('click', ()=>{
+      const art = splitArticle(text);
+      if(!art.isArticle){ art.isArticle = true; art.title = art.title || ''; art.body = art.body || text; }
+      renderArticleMessage(art, text, box);
+      attachArticleTools(art, text, box);
+      artb.textContent = '✅ 下に記事を表示しました'; artb.disabled = true;
+    });
+    const wpb2 = document.createElement('button'); wpb2.className = 'msg-copy-btn';
+    wpb2.textContent = '📝 WordPress用にコピー';
+    wpb2.addEventListener('click', async ()=>{
+      const ok = await copyRichHTML(mdBodyToHTML(text), text);
+      wpb2.textContent = ok ? '✅ コピーしました' : '⚠ 失敗';
+      setTimeout(()=>wpb2.textContent='📝 WordPress用にコピー', 2000);
+    });
+    bar.appendChild(artb); bar.appendChild(wpb2);
+    div.appendChild(bar);
+  }
+  box.appendChild(div);
   box.scrollTop = box.scrollHeight;
   return div;
 }
@@ -2855,8 +2892,8 @@ function renderArticleBody(el, art){
   /* グラフ記法があれば描画し直す(HTML変換では表になっているので通常は不要) */
 }
 /* 記事を「完成形」でチャットに表示する(##やHTMLは一切見せない) */
-function renderArticleMessage(art, rawReply){
-  const box = $('chat-box');
+function renderArticleMessage(art, rawReply, boxEl){
+  const box = boxEl || $('chat-box');
   const div = document.createElement('div');
   div.className = 'msg ai article-msg';
   const who = document.createElement('div'); who.className = 'who'; who.textContent = 'ユピテル';
@@ -2909,8 +2946,8 @@ function copyRow(label, value){
   return row;
 }
 
-function attachArticleTools(art, rawReply){
-  const box = $('chat-box');
+function attachArticleTools(art, rawReply, boxEl){
+  const box = boxEl || $('chat-box');
   const wrap = document.createElement('div');
   wrap.className = 'article-tools';
   wrap.innerHTML = '<div class="at-head">📰 投稿用ツール</div>';
@@ -3415,10 +3452,19 @@ async function contChat(){
   const btn = $('btn-cont-chat');
   btn.disabled = true; btn.textContent = '思考中…';
   const costStart = monthTotals().total;
+  const articleMode = isArticleRequest(text);
   try{
     const c = getConf();
-    const sys = seatSys('jupiter') + digestContext(s.digest) + ' あなたは評議会議長として、完了した審議の継続対話を行う。全経緯を踏まえ、応対ルールを厳守して応答せよ。実行可能な次の一手まで具体的に示すこと。';
-    const prompt = `これまでの審議の全記録:\n${sessionContextText(s)}\n\n主宰の新しい発言:\n${text}\n\n議長として応答せよ。`;
+    const sys = seatSys('jupiter') + digestContext(s.digest)
+      + (articleMode ? articleRule() : '')
+      + ' あなたは評議会議長として、完了した審議の継続対話を行う。全経緯を踏まえ、応対ルールを厳守して応答せよ。実行可能な次の一手まで具体的に示すこと。';
+    let prompt = `これまでの審議の全記録:\n${sessionContextText(s)}\n\n主宰の新しい発言:\n${text}\n\n議長として応答せよ。`;
+    if(articleMode){
+      prompt += '\n\n【書式の絶対指示】HTMLタグとコードブロックは絶対に使うな。'
+        + '過去のやり取りでHTMLを使っていても、今回は使うな。'
+        + '次の形だけで書け:\n【題名】\n(タイトル1行)\n【本文】\n(本文。見出しは ## 、強調は ** 、表はMarkdownの表)\n'
+        + '貼り付け手順の説明も不要。変換はシステムが自動で行う。';
+    }
     let reply = await callEngine(c.seats.jupiter, 'std', sys, [{role:'user',content:prompt}], 2500, $('web-council').checked);
 
     /* 事実確認 */
@@ -3431,7 +3477,7 @@ async function contChat(){
           if(note) note.remove();
           s.thread.push({role:'assistant', content:reply});
           updateSessObj(s);
-          renderThreadMsg('ai', reply);
+          showCouncilReply(reply, articleMode);
           attachThreadVerification(verification);
           const spent0 = monthTotals().total - costStart;
           $('session-cost').textContent = `直前の応答コスト: 約¥${spent0 < 1 ? spent0.toFixed(1) : Math.round(spent0)}`;
@@ -3444,7 +3490,7 @@ async function contChat(){
     }
     s.thread.push({role:'assistant', content:reply});
     updateSessObj(s);
-    renderThreadMsg('ai', reply);
+    showCouncilReply(reply, articleMode);
     const spent = monthTotals().total - costStart;
     $('session-cost').textContent = `直前の応答コスト: 約¥${spent < 1 ? spent.toFixed(1) : Math.round(spent)}`;
     updateDigestBadges(); maybeAutoDigest('評議会', getSessById(curSessId));
